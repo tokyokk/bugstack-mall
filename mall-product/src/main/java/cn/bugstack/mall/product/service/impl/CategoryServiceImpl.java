@@ -44,10 +44,10 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
         List<CategoryEntity> categoryEntityList = baseMapper.selectList(null);
 
         // 2. 找到所有的一级分类
-        List<CategoryEntity> level1Menus = categoryEntityList.stream()
+        List<CategoryEntity> level1MenuList = categoryEntityList.stream()
                 .filter(categoryEntity -> categoryEntity.getParentCid() == 0)
                 .map(menu -> {
-                    menu.setChildren(getChildrens(menu, categoryEntityList));
+                    menu.setChildren(getChildrenList(menu, categoryEntityList));
                     return menu;
                 }).sorted(
                         (menu1, menu2) -> {
@@ -56,7 +56,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
                         }
                 ).collect(Collectors.toList());
 
-        return level1Menus;
+        return level1MenuList;
     }
 
     @Override
@@ -97,11 +97,11 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
         return paths;
     }
 
-    private List<CategoryEntity> getChildrens(CategoryEntity menu, List<CategoryEntity> categoryEntityList) {
+    private List<CategoryEntity> getChildrenList(CategoryEntity menu, List<CategoryEntity> categoryEntityList) {
         return categoryEntityList.stream().filter(categoryEntity -> {
             return categoryEntity.getParentCid().equals(menu.getCatId());
         }).map(categoryEntity -> {
-            categoryEntity.setChildren(getChildrens(categoryEntity, categoryEntityList));
+            categoryEntity.setChildren(getChildrenList(categoryEntity, categoryEntityList));
             return categoryEntity;
         }).sorted(
                 (menu1, menu2) -> {
