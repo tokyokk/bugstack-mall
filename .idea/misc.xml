@@ -8,11 +8,11 @@
         <option value="$PROJECT_DIR$/mall-ware/pom.xml" />
         <option value="$PROJECT_DIR$/mall-coupon/pom.xml" />
         <option value="$PROJECT_DIR$/mall-member/pom.xml" />
+        <option value="$PROJECT_DIR$/pom.xml" />
+        <option value="$PROJECT_DIR$/renren-fast/pom.xml" />
+        <option value="$PROJECT_DIR$/mall-third-party/pom.xml" />
       </list>
     </option>
-  </component>
-  <component name="MavenRunner">
-    <option name="jreName" value="1.8" />
   </component>
   <component name="ProjectInspectionProfilesVisibleTreeState">
     <entry key="Project Default">
