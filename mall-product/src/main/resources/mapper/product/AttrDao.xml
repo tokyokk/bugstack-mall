@@ -23,4 +23,12 @@
             (attr_id = #{item.attrId} and attr_group_id = #{item.attrGroupId})
         </foreach>
     </delete>
+
+    <select id="selectSearchAttrIds" resultType="java.lang.Long">
+        select attr_id from pms_attr where attr_id in
+        <foreach collection="attrIds" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        and search_type = 1
+    </select>
 </mapper>

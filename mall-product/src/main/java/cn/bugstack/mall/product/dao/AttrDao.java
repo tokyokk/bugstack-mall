@@ -20,4 +20,5 @@ public interface AttrDao extends BaseMapper<AttrEntity> {
 
     void deleteBatchRelation(@Param("relationEntityList") List<AttrAttrgroupRelationEntity> relationEntityList);
 
+    List<Long> selectSearchAttrIds(@Param("attrIds") List<Long> attrIds);
 }

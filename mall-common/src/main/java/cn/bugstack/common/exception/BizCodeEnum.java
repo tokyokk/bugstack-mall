@@ -16,7 +16,8 @@ public enum BizCodeEnum {
 
     // 参数校验失败
     UNKNOWN_EXCEPTION(100000, "系统未知异常"),
-    VALID_EXCEPTION(100001, "参数格式校验失败")
+    VALID_EXCEPTION(100001, "参数格式校验失败"),
+    PRODUCT_UP_EXCEPTION(110000, "商品上架异常"),
     ;
 
     private Integer code;

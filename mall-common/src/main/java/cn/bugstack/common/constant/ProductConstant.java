@@ -27,7 +27,26 @@ public class ProductConstant {
 
         private final int code;
         private final String msg;
+    }
 
+    @Getter
+    @AllArgsConstructor
+    public enum StatusEnum {
 
+        /**
+         * 新建
+         */
+        NEW_SPU(0, ""),
+        /**
+         * 商品上架
+         */
+        SPU_UP(1, "商品上架"),
+        /**
+         * 商品下架
+         */
+        SPU_DOWN(2, "商品下架");
+
+        private final int code;
+        private final String msg;
     }
 }
