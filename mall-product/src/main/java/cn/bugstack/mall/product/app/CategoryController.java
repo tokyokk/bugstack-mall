@@ -41,7 +41,6 @@ public class CategoryController {
      * 信息
      */
     @RequestMapping("/info/{catId}")
-    // @RequiresPermissions("product:category:info")
     public R info(@PathVariable("catId") Long catId) {
         CategoryEntity category = categoryService.getById(catId);
 
@@ -52,7 +51,6 @@ public class CategoryController {
      * 保存
      */
     @RequestMapping("/save")
-    // @RequiresPermissions("product:category:save")
     public R save(@RequestBody CategoryEntity category) {
         categoryService.save(category);
 
