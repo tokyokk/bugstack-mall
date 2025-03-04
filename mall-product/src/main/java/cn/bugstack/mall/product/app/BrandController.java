@@ -1,13 +1,11 @@
-package cn.bugstack.mall.product.controller;
+package cn.bugstack.mall.product.app;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 
 import cn.bugstack.common.valid.InsertGroup;
 import cn.bugstack.common.valid.UpdateGroup;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,8 +17,6 @@ import cn.bugstack.mall.product.entity.BrandEntity;
 import cn.bugstack.mall.product.service.BrandService;
 import cn.bugstack.common.utils.PageUtils;
 import cn.bugstack.common.utils.R;
-
-import javax.validation.Valid;
 
 
 /**

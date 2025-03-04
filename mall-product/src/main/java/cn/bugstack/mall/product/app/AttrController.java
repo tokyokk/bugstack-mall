@@ -1,4 +1,4 @@
-package cn.bugstack.mall.product.controller;
+package cn.bugstack.mall.product.app;
 
 import java.util.Arrays;
 import java.util.List;
@@ -6,13 +6,11 @@ import java.util.Map;
 
 import cn.bugstack.mall.product.entity.ProductAttrValueEntity;
 import cn.bugstack.mall.product.service.ProductAttrValueService;
-import cn.bugstack.mall.product.vo.AttrGroupRelactionVO;
 import cn.bugstack.mall.product.vo.AttrRespVO;
 import cn.bugstack.mall.product.vo.AttrVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import cn.bugstack.mall.product.entity.AttrEntity;
 import cn.bugstack.mall.product.service.AttrService;
 import cn.bugstack.common.utils.PageUtils;
 import cn.bugstack.common.utils.R;

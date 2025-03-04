@@ -1,4 +1,4 @@
-package cn.bugstack.mall.product.controller;
+package cn.bugstack.mall.product.app;
 
 import java.util.Arrays;
 import java.util.List;
