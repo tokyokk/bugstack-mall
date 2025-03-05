@@ -174,7 +174,7 @@ public class MallSearchServiceImpl implements MallSearchService {
         catalogAggregation.getBuckets().forEach(bucket -> {
             SearchResponseVO.CatalogVo catalogVo = new SearchResponseVO.CatalogVo();
             // 获取品牌id
-            catalogVo.setCatalogId(Long.valueOf(bucket.getKeyAsString()));
+            catalogVo.setCatalogId(bucket.getKeyAsNumber().longValue());
             // 获取品牌名称 catalogNameAggregation
             ParsedStringTerms catalogNameAggregation = bucket.getAggregations().get("catalogNameAggregation");
             String catalogName = Optional.ofNullable(catalogNameAggregation.getBuckets())
@@ -227,7 +227,7 @@ public class MallSearchServiceImpl implements MallSearchService {
         }
 
         // 品牌，分类面包屑处理
-        if (searchParam.getBrandId() != null && searchParam.getBrandId().isEmpty()) {
+        if (searchParam.getBrandId() != null && !searchParam.getBrandId().isEmpty()) {
             List<SearchResponseVO.NavVo> navs = result.getNavs();
             SearchResponseVO.NavVo navVo = new SearchResponseVO.NavVo();
             navVo.setNavName("品牌");
