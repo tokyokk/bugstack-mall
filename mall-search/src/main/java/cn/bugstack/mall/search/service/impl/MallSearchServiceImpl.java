@@ -130,7 +130,6 @@ public class MallSearchServiceImpl implements MallSearchService {
             attrVos.add(attrVo);
         });
         result.setAttrs(attrVos);
-        log.info("商品检索属性结果：{}", JSON.toJSONString(result));
 
         // 3.当前商品所涉及到的所有品牌信息
         List<SearchResponseVO.BrandVo> brandVos = new ArrayList<>();
