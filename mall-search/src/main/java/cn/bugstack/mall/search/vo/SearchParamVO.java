@@ -38,14 +38,14 @@ public class SearchParamVO {
     private String sort;
 
     /**
-     * 是否显示有货 0/1
+     * 是否显示有货 0 无库存/1 有库存
      */
     private Integer hasStock;
 
     /**
      * 价格区间查询 skuPrice=1_500/_500/500_
      */
-    private Integer skuPrice;
+    private String skuPrice;
 
     /**
      * 按照品牌进行查询 brandId=1&brandId=2
@@ -60,5 +60,5 @@ public class SearchParamVO {
     /**
      * 页码
      */
-    private Integer pageNum;
+    private Integer pageNum = 1;
 }
