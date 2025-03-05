@@ -1,6 +1,7 @@
 package cn.bugstack.mall.product.app;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 import cn.bugstack.common.valid.InsertGroup;
@@ -52,6 +53,15 @@ public class BrandController {
     public R info(@PathVariable("brandId") Long brandId) {
         BrandEntity brand = brandService.getById(brandId);
 
+        return R.ok().put("brand", brand);
+    }
+
+    /**
+     * 查询品牌列表信息根据brandId集合
+     */
+    @RequestMapping("/infos")
+    public R info(@RequestParam("brandIds") List<Long> brandIds) {
+        List<BrandEntity> brand = brandService.getBrandsByIds(brandIds);
         return R.ok().put("brand", brand);
     }
 

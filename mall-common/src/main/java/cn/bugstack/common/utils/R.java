@@ -28,6 +28,13 @@ public class R extends HashMap<String, Object> {
         put("msg", "success");
     }
 
+    public <T> T getData(String key,TypeReference<T> typeReference) {
+        Object data = get(key); // 默认是map
+        String dataStr = JSON.toJSONString(data);
+        T t = JSON.parseObject(dataStr, typeReference);
+        return t;
+    }
+
     /**
      * 利用alibaba的fastjson解析json数据，处理复杂类型的转换，需要指定类型
      *

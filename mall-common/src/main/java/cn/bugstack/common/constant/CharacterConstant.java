@@ -28,4 +28,9 @@ public interface CharacterConstant {
      * desc
      */
     public static final String DESC = "desc";
+
+    /**
+     * ;
+     */
+    public static final String SEMICOLON = ";";
 }

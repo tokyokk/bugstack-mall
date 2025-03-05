@@ -2,12 +2,14 @@ package cn.bugstack.mall.search.service.impl;
 
 import cn.bugstack.common.constant.CharacterConstant;
 import cn.bugstack.common.to.es.SkuEsModel;
+import cn.bugstack.common.utils.R;
 import cn.bugstack.mall.search.config.MallElasticSearchConfig;
 import cn.bugstack.mall.search.constant.ProductConstant;
+import cn.bugstack.mall.search.feign.ProductFeignService;
 import cn.bugstack.mall.search.service.MallSearchService;
-import cn.bugstack.mall.search.vo.SearchParamVO;
-import cn.bugstack.mall.search.vo.SearchResponseVO;
+import cn.bugstack.mall.search.vo.*;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.lucene.search.join.ScoreMode;
 import org.elasticsearch.action.search.SearchRequest;
@@ -36,6 +38,8 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -44,7 +48,7 @@ import java.util.stream.Collectors;
 
 /**
  * @author micro, 微信：yykk、
- * @description
+ * @description 商品检索服务
  * @date 2025/3/5 13:45
  * @github https://github.com/tokyokk
  * @copyright 博客：http://bugstack.top - 沉淀、分享、成长。让自己和他人都有所收获！
@@ -55,6 +59,9 @@ public class MallSearchServiceImpl implements MallSearchService {
 
     @Autowired
     private RestHighLevelClient restHighLevelClient;
+
+    @Autowired
+    private ProductFeignService productFeignService;
 
     @Override
     public SearchResponseVO search(SearchParamVO searchParam) {
@@ -110,7 +117,8 @@ public class MallSearchServiceImpl implements MallSearchService {
         attrIdAggregation.getBuckets().forEach(bucket -> {
             SearchResponseVO.AttrVo attrVo = new SearchResponseVO.AttrVo();
             // 获取属性id
-            attrVo.setAttrId(bucket.getKeyAsNumber().longValue());
+            long attrId = bucket.getKeyAsNumber().longValue();
+            attrVo.setAttrId(attrId);
             // 获取属性名称 attrNameAggregation
             String attrName = Optional.ofNullable(bucket.getAggregations().get("attrNameAggregation"))
                     .filter(ParsedStringTerms.class::isInstance)
@@ -191,8 +199,91 @@ public class MallSearchServiceImpl implements MallSearchService {
         }
         result.setPageNavs(pageNavs); // 页码导航
 
+        // 6.构建面包屑导航
+        if (!CollectionUtils.isEmpty(searchParam.getAttrs())) {
+            List<SearchResponseVO.NavVo> navVoList = searchParam.getAttrs().stream().map(attr -> {
+                // 1.分析每一个attr 的参数值 attrs=2_5寸:6寸
+                SearchResponseVO.NavVo navVo = new SearchResponseVO.NavVo();
+                String[] s = attr.split("_");
+                navVo.setNavValue(s[1]);
+                R r = productFeignService.attrInfo(Long.valueOf(s[0]));
+                result.getAttrIds().add(Long.valueOf(s[0]));
+                if (r.getCode() == 0) {
+                    AttrResponseVO attrData = r.getData("attr", new TypeReference<AttrResponseVO>() {
+                    });
+                    navVo.setNavName(attrData.getAttrName());
+                } else {
+                    navVo.setNavName(s[0]);
+                }
+
+                // 2.取消了面包屑跳转到哪里
+                String replaceUrl = replaceQueryString(searchParam, attr, "attrs");
+                navVo.setLink("http://search.mall.com/list.html?" + replaceUrl);
+
+                return navVo;
+            }).collect(Collectors.toList());
+
+            result.setNavs(navVoList);
+        }
+
+        // 品牌，分类面包屑处理
+        if (searchParam.getBrandId() != null && searchParam.getBrandId().isEmpty()) {
+            List<SearchResponseVO.NavVo> navs = result.getNavs();
+            SearchResponseVO.NavVo navVo = new SearchResponseVO.NavVo();
+            navVo.setNavName("品牌");
+            R r = productFeignService.brandInfo(searchParam.getBrandId());
+            if (r.getCode() == 0) {
+                List<BrandVO> brands = r.getData("brand", new TypeReference<List<BrandVO>>() {
+                });
+                StringBuffer buffer = new StringBuffer();
+                String replaceUrl = "";
+                for (BrandVO brand : brands) {
+                    buffer.append(brand.getBrandName()).append(CharacterConstant.SEMICOLON);
+                    replaceUrl = replaceQueryString(searchParam, brand.getBrandId().toString(), "brandId");
+                }
+                navVo.setNavValue(buffer.toString());
+                navVo.setLink("http://search.mall.com/list.html?" + replaceUrl);
+            }
+            navs.add(navVo);
+        }
+
+        // 分类面包屑处理
+        if (searchParam.getCatalog3Id() != null && searchParam.getCatalog3Id() != 0) {
+            List<SearchResponseVO.NavVo> navs = result.getNavs();
+            SearchResponseVO.NavVo navVo = new SearchResponseVO.NavVo();
+            navVo.setNavName("分类");
+            R r = productFeignService.categoryInfo(searchParam.getCatalog3Id());
+            if (r.getCode() == 0) {
+                CatalogVO data = r.getData(new TypeReference<CatalogVO>() {
+                });
+                navVo.setNavValue(data.getName());
+                navs.add(navVo);
+            }
+            navs.add(navVo);
+        }
+
         log.info("商品检索结果：{}", JSON.toJSONString(result));
         return result;
+    }
+
+    /**
+     * 替换URL参数
+     *
+     * @param searchParam 检索参数
+     * @param value       参数值
+     * @param key         参数名
+     * @return 替换后的URL参数
+     */
+    private static String replaceQueryString(SearchParamVO searchParam, String value, String key) {
+        String encodeAttr = null;
+        try {
+            encodeAttr = URLEncoder.encode(value, "UTF-8");
+            encodeAttr = encodeAttr.replace("+", "%20");// 浏览器对空格编码与java不一样
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
+        String replaceUrl = searchParam.get_queryString().replace("&" + key + "=" + encodeAttr, "");
+        return replaceUrl;
     }
 
     /**
