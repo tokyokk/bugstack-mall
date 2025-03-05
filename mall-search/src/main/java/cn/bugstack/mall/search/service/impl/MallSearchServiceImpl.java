@@ -112,7 +112,14 @@ public class MallSearchServiceImpl implements MallSearchService {
             // 获取属性id
             attrVo.setAttrId(bucket.getKeyAsNumber().longValue());
             // 获取属性名称 attrNameAggregation
-            String attrName = ((ParsedStringTerms) bucket.getAggregations().get("attrNameAggregation")).getBuckets().get(0).getKeyAsString();
+            String attrName = Optional.ofNullable(bucket.getAggregations().get("attrNameAggregation"))
+                    .filter(ParsedStringTerms.class::isInstance)
+                    .map(ParsedStringTerms.class::cast)
+                    .map(ParsedStringTerms::getBuckets)
+                    .filter(buckets -> !buckets.isEmpty())
+                    .map(buckets -> buckets.get(0).getKeyAsString())
+                    .orElse(null);
+
             attrVo.setAttrName(attrName);
             // 获取属性值 attrValuesAggregation
             List<String> attrValues = ((ParsedStringTerms) bucket.getAggregations().get("attrValuesAggregation")).getBuckets()
