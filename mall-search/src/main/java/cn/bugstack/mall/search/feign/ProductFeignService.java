@@ -40,6 +40,9 @@ public interface ProductFeignService {
 
     /**
      * 根据分类ID获取分类信息
+     *
+     * @param catId 分类ID
+     * @return 分类信息
      */
     @RequestMapping("/product/category/info/{catId}")
     public R categoryInfo(@PathVariable("catId") Long catId);
