@@ -153,7 +153,7 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoDao, SkuInfoEntity> i
             CompletableFuture.allOf(saleAttrFuture, descFuture, baseAttrFuture, imageFuture).get();
         } catch (Exception e) {
             e.printStackTrace();
-            log.error("获取sku详情异常：{}", e);
+            log.error("获取sku详情异常：{}", e.getMessage());
 
         }
 
