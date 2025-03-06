@@ -1,5 +1,6 @@
 package cn.bugstack.mall.product.service;
 
+import cn.bugstack.mall.product.vo.SkuItemVO;
 import com.baomidou.mybatisplus.extension.service.IService;
 import cn.bugstack.common.utils.PageUtils;
 import cn.bugstack.mall.product.entity.SkuInfoEntity;
@@ -23,5 +24,7 @@ public interface SkuInfoService extends IService<SkuInfoEntity> {
     PageUtils queryPageByCondition(Map<String, Object> params);
 
     List<SkuInfoEntity> getSkuBySpuId(Long spuId);
+
+    SkuItemVO getSkuItem(Long skuId);
 }
 

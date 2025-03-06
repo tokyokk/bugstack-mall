@@ -1,9 +1,11 @@
 package cn.bugstack.mall.product.service;
 
+import cn.bugstack.mall.product.vo.SkuItemSaleAttrVO;
 import com.baomidou.mybatisplus.extension.service.IService;
 import cn.bugstack.common.utils.PageUtils;
 import cn.bugstack.mall.product.entity.SkuSaleAttrValueEntity;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -16,5 +18,7 @@ import java.util.Map;
 public interface SkuSaleAttrValueService extends IService<SkuSaleAttrValueEntity> {
 
     PageUtils queryPage(Map<String, Object> params);
+
+    List<SkuItemSaleAttrVO> getSaleAttrsBySpuId(Long spuId);
 }
 

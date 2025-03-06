@@ -6,6 +6,8 @@ package cn.bugstack.mall.product.vo;
 import lombok.Data;
 import lombok.ToString;
 
+import java.util.List;
+
 
 /**
  * @author yaoxinjia
@@ -16,6 +18,6 @@ public class Attr {
 
     private Long attrId;
     private String attrName;
-    private String attrValue;
+    private List<String> attrValue;
 
 }

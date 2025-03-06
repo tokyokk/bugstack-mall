@@ -41,7 +41,7 @@ spring:
         - id: nginx_route
           uri: lb://mall-product
           predicates:
-            - Host=mall.com
+            - Host=mall.com,item.mall.com
 
         - id: search_route
           uri: lb://mall-search

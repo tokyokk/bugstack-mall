@@ -11,7 +11,7 @@ import java.util.List;
  * @author yaoxinjia
  */
 @Data
-public class SpuSaveVo {
+public class SpuSaveVO {
 
     private String spuName;
     private String spuDescription;

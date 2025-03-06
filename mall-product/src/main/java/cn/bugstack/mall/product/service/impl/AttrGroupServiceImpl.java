@@ -3,6 +3,8 @@ package cn.bugstack.mall.product.service.impl;
 import cn.bugstack.mall.product.entity.AttrEntity;
 import cn.bugstack.mall.product.service.AttrService;
 import cn.bugstack.mall.product.vo.AttrGroupWithAttrsVO;
+import cn.bugstack.mall.product.vo.SkuItemVO;
+import cn.bugstack.mall.product.vo.SpuItemAttrGroupVO;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -86,6 +88,12 @@ public class AttrGroupServiceImpl extends ServiceImpl<AttrGroupDao, AttrGroupEnt
 
             return attrGroupWithAttrsVO;
         }).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<SpuItemAttrGroupVO> getAttrGroupWithAttrsBySpuId(Long spuId, Long catalogId) {
+        // 查出当前spu对应的所有属性分组信息以及当前分组下的所有属性信息
+        return this.baseMapper.getAttrGroupWithAttrsBySpuId(spuId, catalogId);
     }
 
 }

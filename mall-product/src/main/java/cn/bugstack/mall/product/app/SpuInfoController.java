@@ -3,7 +3,7 @@ package cn.bugstack.mall.product.app;
 import java.util.Arrays;
 import java.util.Map;
 
-import cn.bugstack.mall.product.vo.SpuSaveVo;
+import cn.bugstack.mall.product.vo.SpuSaveVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -60,7 +60,7 @@ public class SpuInfoController {
      * 保存
      */
     @RequestMapping("/save")
-    public R save(@RequestBody SpuSaveVo vo) {
+    public R save(@RequestBody SpuSaveVO vo) {
         spuInfoService.saveSpuInfo(vo);
         return R.ok();
     }

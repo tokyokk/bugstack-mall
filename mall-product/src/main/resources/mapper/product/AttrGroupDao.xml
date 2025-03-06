@@ -13,5 +13,23 @@
         <result property="catelogId" column="catelog_id"/>
     </resultMap>
 
+    <resultMap id="SpuItemAttrGroupMap" type="cn.bugstack.mall.product.vo.SpuItemAttrGroupVO">
 
+    </resultMap>
+
+    <select id="getAttrGroupWithAttrsBySpuId" resultMap="SpuItemAttrGroupMap">
+        SELECT
+            ag.attr_group_id,
+            ag.attr_group_name,
+            aar.attr_id,
+            attr.attr_name,
+            pav.attr_value,
+            pav.spu_id
+        FROM
+            pms_attr_group ag
+                LEFT JOIN pms_attr_attrgroup_relation aar ON aar.attr_group_id = ag.attr_group_id
+                LEFT JOIN pms_attr attr ON attr.attr_id = aar.attr_id
+                LEFT JOIN pms_product_attr_value pav ON pav.attr_id = attr.attr_id
+        where ag.catelog_id = #{catalogId} and pav.spu_id = #{spuId}
+    </select>
 </mapper>

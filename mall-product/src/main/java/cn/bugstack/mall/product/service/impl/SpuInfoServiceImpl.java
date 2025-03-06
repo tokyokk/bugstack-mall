@@ -84,7 +84,7 @@ public class SpuInfoServiceImpl extends ServiceImpl<SpuInfoDao, SpuInfoEntity> i
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void saveSpuInfo(SpuSaveVo vo) {
+    public void saveSpuInfo(SpuSaveVO vo) {
         // 1.保存spu基本信息 pms_spu_info
         SpuInfoEntity spuInfoEntity = SpuInfoEntity.builder()
                 .spuName(vo.getSpuName())
