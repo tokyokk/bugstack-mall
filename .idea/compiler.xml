@@ -19,6 +19,7 @@
         <module name="mall-member" />
         <module name="renren-generator" />
         <module name="mall-gateway" />
+        <module name="mall-auth-server" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel target="8" />
