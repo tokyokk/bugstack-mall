@@ -5,7 +5,11 @@ import com.baomidou.mybatisplus.annotation.TableName;
 
 import java.io.Serializable;
 import java.util.Date;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * 会员
@@ -16,6 +20,9 @@ import lombok.Data;
  */
 @Data
 @TableName("ums_member")
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class MemberEntity implements Serializable {
 	private static final long serialVersionUID = 1L;
 
@@ -92,5 +99,9 @@ public class MemberEntity implements Serializable {
 	 * 注册时间
 	 */
 	private Date createTime;
+
+	private String socialUid;
+	private String accessToken;
+	private String expiresIn;
 
 }

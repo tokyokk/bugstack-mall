@@ -1,8 +1,13 @@
 package cn.bugstack.mall.member.service;
 
-import com.baomidou.mybatisplus.extension.service.IService;
 import cn.bugstack.common.utils.PageUtils;
 import cn.bugstack.mall.member.entity.MemberEntity;
+import cn.bugstack.mall.member.exception.PhoneExistException;
+import cn.bugstack.mall.member.exception.UserNameExistException;
+import cn.bugstack.mall.member.vo.MemberLoginVO;
+import cn.bugstack.mall.member.vo.MemberRegisterVO;
+import cn.bugstack.mall.member.vo.SocialUser;
+import com.baomidou.mybatisplus.extension.service.IService;
 
 import java.util.Map;
 
@@ -16,5 +21,15 @@ import java.util.Map;
 public interface MemberService extends IService<MemberEntity> {
 
     PageUtils queryPage(Map<String, Object> params);
+
+    void register(MemberRegisterVO memberRegister);
+
+    void checkPhoneUnique(String phone) throws PhoneExistException;
+
+    void checkUsernameUnique(String username) throws UserNameExistException;
+
+    MemberEntity login(MemberLoginVO memberLoginVO);
+
+    MemberEntity login(SocialUser socialUser) throws Exception;
 }
 

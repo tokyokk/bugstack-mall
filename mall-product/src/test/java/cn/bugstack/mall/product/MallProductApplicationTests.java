@@ -21,8 +21,7 @@ class MallProductApplicationTests {
     @Autowired
     private BrandService brandService;
 
-    //@Autowired
-    //private OSSClient ossClient;
+
 
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
@@ -64,14 +63,6 @@ class MallProductApplicationTests {
         stringRedisTemplate.opsForValue().set("hello", "world_" + System.currentTimeMillis());
         System.out.println(stringRedisTemplate.opsForValue().get("hello"));
     }
-
-    //@Test
-    //void ossTest() throws FileNotFoundException {
-    //    FileInputStream fileInputStream = new FileInputStream("");
-    //    ossClient.putObject("mall-product", "a.jpg", fileInputStream);
-    //    ossClient.shutdown();
-    //    System.out.println("上传成功");
-    //}
 
     @Test
     void contextLoads() {
