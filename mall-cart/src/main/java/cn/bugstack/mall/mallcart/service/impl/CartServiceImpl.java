@@ -51,7 +51,7 @@ public class CartServiceImpl implements CartService {
      *
      * @param skuId SKU 编号
      * @param num   数量
-     * @return {@link CartItem }
+     * @return {@link CartItem } 购物车信息
      */
     @Override
     public CartItem addToCart(final Long skuId, final Integer num) {
