@@ -19,7 +19,7 @@ public class MallWebConfig implements WebMvcConfigurer {
      * @param registry
      */
     @Override
-    public void addViewControllers(ViewControllerRegistry registry) {
+    public void addViewControllers(final ViewControllerRegistry registry) {
 
         /**
          *    @GetMapping("/login.html")
@@ -27,7 +27,7 @@ public class MallWebConfig implements WebMvcConfigurer {
          *         return "login";
          *     }
          */
-        registry.addViewController("/login.html").setViewName("login");
+        // registry.addViewController("/login.html").setViewName("login");
         registry.addViewController("/reg.html").setViewName("reg");
     }
 }

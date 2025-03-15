@@ -3,6 +3,7 @@ package cn.bugstack.mall.auth.controller;
 import cn.bugstack.common.constant.AuthServerConstant;
 import cn.bugstack.common.exception.BizCodeEnum;
 import cn.bugstack.common.utils.R;
+import cn.bugstack.common.vo.MemberResponseVO;
 import cn.bugstack.mall.auth.feign.MemberFeignService;
 import cn.bugstack.mall.auth.feign.ThirdPartyFeignService;
 import cn.bugstack.mall.auth.vo.UserLoginVO;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
 import java.util.HashMap;
 import java.util.Map;
@@ -41,12 +43,21 @@ public class LoginController {
     private final StringRedisTemplate redisTemplate;
     private final MemberFeignService memberFeignService;
 
-    public LoginController(ThirdPartyFeignService thirdPartyFeignService,
-                           StringRedisTemplate redisTemplate,
-                           MemberFeignService memberFeignService) {
+    public LoginController(final ThirdPartyFeignService thirdPartyFeignService,
+                           final StringRedisTemplate redisTemplate,
+                           final MemberFeignService memberFeignService) {
         this.thirdPartyFeignService = thirdPartyFeignService;
         this.redisTemplate = redisTemplate;
         this.memberFeignService = memberFeignService;
+    }
+
+    @GetMapping("/login.html")
+    public String loginPage(final HttpSession session) {
+        final Object attribute = session.getAttribute(AuthServerConstant.LOGIN_USER);
+        if (null != attribute) {
+            return "redirect:http://mall.com";
+        }
+        return "login";
     }
 
 
@@ -58,11 +69,11 @@ public class LoginController {
      */
     @ResponseBody
     @GetMapping("/sms/sendCode")
-    public R sendCode(@RequestParam("phone") String phone) {
+    public R sendCode(@RequestParam("phone") final String phone) {
         // todo：1.接口防刷
-        String redisCode = redisTemplate.opsForValue().get(AuthServerConstant.SMS_CODE_CACHE_PREFIX + phone);
+        final String redisCode = redisTemplate.opsForValue().get(AuthServerConstant.SMS_CODE_CACHE_PREFIX + phone);
         if (!StringUtils.isEmpty(redisCode)) {
-            long redisCodeTime = Long.parseLong(redisCode.split("_")[1]);
+            final long redisCodeTime = Long.parseLong(redisCode.split("_")[1]);
             if (System.currentTimeMillis() - redisCodeTime < 60000) {
                 // 60秒内不能再发
                 return R.error(BizCodeEnum.SMS_CODE_EXCEPTION.getCode(), BizCodeEnum.SMS_CODE_EXCEPTION.getMsg());
@@ -70,8 +81,8 @@ public class LoginController {
         }
 
         // 2. 验证码的再次校验：redis
-        String substring = UUID.randomUUID().toString().substring(0, 5);
-        String code = substring + "_" + System.currentTimeMillis();
+        final String substring = UUID.randomUUID().toString().substring(0, 5);
+        final String code = substring + "_" + System.currentTimeMillis();
         thirdPartyFeignService.sendCode(phone, code);
         // redis缓存验证码，防止手机号在60秒内重复发送验证码
         redisTemplate.opsForValue().set(AuthServerConstant.SMS_CODE_CACHE_PREFIX + phone, substring, 10, TimeUnit.MINUTES);
@@ -87,10 +98,10 @@ public class LoginController {
      * @return {@link String }
      */
     @PostMapping("register")
-    public String register(@Valid UserRegisterVO userRegisterVO, BindingResult result, RedirectAttributes redirectAttributes) {
+    public String register(@Valid final UserRegisterVO userRegisterVO, final BindingResult result, final RedirectAttributes redirectAttributes) {
         if (result.hasErrors()) {
 
-            Map<String, String> errors = result.getFieldErrors().stream().collect(Collectors.toMap(
+            final Map<String, String> errors = result.getFieldErrors().stream().collect(Collectors.toMap(
                     FieldError::getField, FieldError::getDefaultMessage
             ));
             /*model.addAttribute("errors", errors);*/
@@ -104,20 +115,20 @@ public class LoginController {
         }
 
         // 1.校验验证码
-        String code = userRegisterVO.getCode();
-        String redisCode = redisTemplate.opsForValue().get(AuthServerConstant.SMS_CODE_CACHE_PREFIX + userRegisterVO.getPhone());
+        final String code = userRegisterVO.getCode();
+        final String redisCode = redisTemplate.opsForValue().get(AuthServerConstant.SMS_CODE_CACHE_PREFIX + userRegisterVO.getPhone());
         if (!StringUtils.isEmpty(redisCode)) {
             if (redisCode.split("_")[0].equals(code)) {
                 // 删除验证码：令牌机制
                 redisTemplate.delete(AuthServerConstant.SMS_CODE_CACHE_PREFIX + userRegisterVO.getPhone());
                 // 验证码通过，调用远程注册服务
-                R r = memberFeignService.register(userRegisterVO);
+                final R r = memberFeignService.register(userRegisterVO);
                 if (r.getCode() == 0) {
                     // 成功
                     return "redirect:http://auth.mall.com/login.html";
                 } else {
                     // 失败
-                    Map<String, String> errors = new HashMap<>();
+                    final Map<String, String> errors = new HashMap<>();
                     errors.put("msg", r.getData("msg", new TypeReference<String>() {}));
                     redirectAttributes.addFlashAttribute("errors", errors);
                     return "redirect:http://auth.mall.com/reg.html";
@@ -135,19 +146,18 @@ public class LoginController {
     }
 
     @PostMapping("/login")
-    public String login(UserLoginVO userLoginVO,RedirectAttributes redirectAttributes) {
-        R r = memberFeignService.login(userLoginVO);
+    public String login(final UserLoginVO userLoginVO, final RedirectAttributes redirectAttributes, final HttpSession session) {
+        final R r = memberFeignService.login(userLoginVO);
         if (r.getCode() == 0) {
             // 成功
             // 1.将登录成功的信息放在session中
-            //MemberEntity data = r.getData("data", new TypeReference<MemberEntity>() {
-            //});
-            //HttpSession session = request.getSession();
-            //session.setAttribute(AuthServerConstant.LOGIN_USER, data);
+            final MemberResponseVO data = r.getData("data", new TypeReference<MemberResponseVO>() {
+            });
+            session.setAttribute(AuthServerConstant.LOGIN_USER, data);
             // 2.跳转到首页
             return "redirect:http://mall.com";
         } else {
-            Map<String, String> errors = new HashMap<>();
+            final Map<String, String> errors = new HashMap<>();
             errors.put("msg", r.getData("msg", new TypeReference<String>() {}));
             redirectAttributes.addFlashAttribute("errors", errors);
             return "redirect:http://auth.mall.com/login.html";
