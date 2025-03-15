@@ -22,5 +22,6 @@
         <module>mall-common</module>
         <module>mall-third-party</module>
         <module>mall-search</module>
+        <module>mall-cart</module>
     </modules>
 </project>
