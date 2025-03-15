@@ -46,6 +46,13 @@ public class CartServiceImpl implements CartService {
 
     public static final String CART_PREFIX = "mall:cart:";
 
+    /**
+     * 加入购物车
+     *
+     * @param skuId SKU 编号
+     * @param num   数量
+     * @return {@link CartItem }
+     */
     @Override
     public CartItem addToCart(final Long skuId, final Integer num) {
         final BoundHashOperations<String, Object, Object> boundHashOps = getCartOps();
