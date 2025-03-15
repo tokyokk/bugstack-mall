@@ -51,7 +51,7 @@ public class CartServiceImpl implements CartService {
         final BoundHashOperations<String, Object, Object> boundHashOps = getCartOps();
         // 2.添加新商品到购物车
 
-        final Object res = boundHashOps.get(skuId.toString());
+        final String res = (String) boundHashOps.get(skuId.toString());
         final CartItem cartItem;
         if (StringUtils.isEmpty(res)) {
             // 购物车中没有该商品，添加到购物车
@@ -84,7 +84,7 @@ public class CartServiceImpl implements CartService {
             boundHashOps.put(skuId.toString(), cartJson);
         } else {
             // 购物车中已有该商品，修改数量即可
-            cartItem = JSON.parseObject((String) res, CartItem.class);
+            cartItem = JSON.parseObject(res, CartItem.class);
             cartItem.setCount(cartItem.getCount() + num);
             final String cartJson = JSON.toJSONString(cartItem);
             boundHashOps.put(skuId.toString(), cartJson);
