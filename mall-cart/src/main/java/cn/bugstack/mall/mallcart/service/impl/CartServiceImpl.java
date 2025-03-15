@@ -52,9 +52,10 @@ public class CartServiceImpl implements CartService {
         // 2.添加新商品到购物车
 
         final Object res = boundHashOps.get(skuId.toString());
+        final CartItem cartItem;
         if (StringUtils.isEmpty(res)) {
             // 购物车中没有该商品，添加到购物车
-            final CartItem cartItem = new CartItem();
+            cartItem = new CartItem();
             // 1. 远程查询要添加的商品的信息
             final CompletableFuture<Void> getSkuInfoTask = CompletableFuture.runAsync(() -> {
                 final R r = productFeignService.getSkuInfo(skuId);
@@ -81,15 +82,14 @@ public class CartServiceImpl implements CartService {
             }
             final String cartJson = JSON.toJSONString(cartItem);
             boundHashOps.put(skuId.toString(), cartJson);
-            return cartItem;
         } else {
             // 购物车中已有该商品，修改数量即可
-            final CartItem cartItem = JSON.parseObject((String) res, CartItem.class);
+            cartItem = JSON.parseObject((String) res, CartItem.class);
             cartItem.setCount(cartItem.getCount() + num);
             final String cartJson = JSON.toJSONString(cartItem);
             boundHashOps.put(skuId.toString(), cartJson);
-            return cartItem;
         }
+        return cartItem;
     }
 
     @Override
@@ -106,7 +106,7 @@ public class CartServiceImpl implements CartService {
      */
     private BoundHashOperations<String, Object, Object> getCartOps() {
         final UserInfoTO userInfoTo = CartInterceptor.USERINFO_THREAD_LOCAL.get();
-        String cartKey = "";
+        final String cartKey;
         if (userInfoTo.getUserId() != null) {
             cartKey = CART_PREFIX + userInfoTo.getUserId();
         } else {
