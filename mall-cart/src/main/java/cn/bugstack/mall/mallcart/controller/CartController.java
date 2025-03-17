@@ -25,6 +25,44 @@ public class CartController {
 
     private final CartService cartService;
 
+    /**
+     * 删除购物项
+     *
+     * @param skuId skuId
+     * @return {@link String }
+     */
+    @GetMapping("deleteItem")
+    public String deleteItem(@RequestParam("skuId") final Long skuId) {
+        cartService.deleteItem(skuId);
+        return "redirect:http://cart.mall.com/cart.html";
+    }
+
+    /**
+     * 修改购物项数量
+     *
+     * @param skuId skuId
+     * @param num   数量
+     * @return {@link String }
+     */
+    @GetMapping("countItem")
+    public String countItem(@RequestParam("skuId") final Long skuId, @RequestParam("num") final Integer num) {
+        cartService.changeCountItem(skuId, num);
+        return "redirect:http://cart.mall.com/cart.html";
+    }
+
+    /**
+     * 勾选购物项
+     *
+     * @param skuId skuId
+     * @param check 是否选中
+     * @return {@link String }
+     */
+    @GetMapping("/checkItem")
+    public String checkItem(@RequestParam("skuId") final Long skuId, @RequestParam("check") final Integer check) {
+        cartService.checkItem(skuId, check);
+        return "redirect:http://cart.mall.com/cart.html";
+    }
+
 
     /**
      * @param session 浏览器有一个user-key：标识用户身份，一个月后过期
@@ -34,6 +72,7 @@ public class CartController {
      * @return {@link String }
      */
     @GetMapping("/cart.html")
+
     public String cart(final HttpSession session, final Model model) {
         // 1.快速得到用户信息
         final Cart cart = cartService.getCart();
