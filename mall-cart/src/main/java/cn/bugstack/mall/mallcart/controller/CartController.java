@@ -1,9 +1,8 @@
 package cn.bugstack.mall.mallcart.controller;
 
-import cn.bugstack.mall.mallcart.interceptor.CartInterceptor;
 import cn.bugstack.mall.mallcart.service.CartService;
+import cn.bugstack.mall.mallcart.vo.Cart;
 import cn.bugstack.mall.mallcart.vo.CartItem;
-import cn.bugstack.mall.mallcart.vo.UserInfoTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -35,9 +34,10 @@ public class CartController {
      * @return {@link String }
      */
     @GetMapping("/cart.html")
-    public String cart(final HttpSession session) {
+    public String cart(final HttpSession session, final Model model) {
         // 1.快速得到用户信息
-        final UserInfoTO userInfoTO = CartInterceptor.USERINFO_THREAD_LOCAL.get();
+        final Cart cart = cartService.getCart();
+        model.addAttribute("cart", cart);
         return "cartList";
     }
 

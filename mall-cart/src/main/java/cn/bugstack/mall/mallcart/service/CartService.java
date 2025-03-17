@@ -1,5 +1,6 @@
 package cn.bugstack.mall.mallcart.service;
 
+import cn.bugstack.mall.mallcart.vo.Cart;
 import cn.bugstack.mall.mallcart.vo.CartItem;
 
 /**
@@ -27,4 +28,13 @@ public interface CartService {
      * @return CartItem
      */
     CartItem getCartItem(Long skuId);
+
+    Cart getCart();
+
+    /**
+     * 清空购物车
+     *
+     * @param cartkey 购物车key
+     */
+    void clearCart(String cartkey);
 }

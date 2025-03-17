@@ -26,8 +26,14 @@
 
         <ul class="hd_wrap_right">
             <li class="forel">
-                <a href="/javascript:;" class="link_login">你好,请登录</a>&nbsp;
-                <a href="/javascript:;" class="link_regist">免费注册</a>
+            <li style="width: 80px">
+                <a th:if="${session.loginUser == null}" href="http://auth.mall.com/login.html"
+                   class="li_2">你好，请登录</a>
+                <a th:else style="width: 100px">[[ ${session.loginUser.nickname}]]</a>
+            </li>
+            <li>
+                <a th:if="${session.loginUser == null}" href="http://auth.mall.com/reg.html">免费注册</a>
+            </li>
             </li>
             <li class="spacer"></li>
 

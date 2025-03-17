@@ -4,6 +4,7 @@ import cn.bugstack.common.utils.R;
 import cn.bugstack.mall.mallcart.feign.ProductFeignService;
 import cn.bugstack.mall.mallcart.interceptor.CartInterceptor;
 import cn.bugstack.mall.mallcart.service.CartService;
+import cn.bugstack.mall.mallcart.vo.Cart;
 import cn.bugstack.mall.mallcart.vo.CartItem;
 import cn.bugstack.mall.mallcart.vo.SkuInfoVO;
 import cn.bugstack.mall.mallcart.vo.UserInfoTO;
@@ -18,6 +19,7 @@ import org.springframework.util.StringUtils;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.stream.Collectors;
 
 /**
  * @author micro, 微信：yykk、
@@ -106,6 +108,43 @@ public class CartServiceImpl implements CartService {
         return JSON.parseObject(str, CartItem.class);
     }
 
+    @Override
+    public Cart getCart() {
+        final UserInfoTO userInfoTo = CartInterceptor.USERINFO_THREAD_LOCAL.get();
+        final Cart cart = new Cart();
+        if (userInfoTo.getUserId() != null) {
+            // 1.登录
+            final String cartKey = CART_PREFIX + userInfoTo.getUserId();
+            // 2.如果临时购物车中的数据还没有合并
+            final String tempCartKey = CART_PREFIX + userInfoTo.getUserKey();
+            final List<CartItem> tempCartItems = getCartItems(tempCartKey);
+            if (tempCartItems != null) {
+                // 临时购物车有数据，需要合并
+                for (final CartItem item : tempCartItems) {
+                    addToCart(item.getSkuId(), item.getCount());
+                }
+                // 清空临时购物车
+                clearCart(tempCartKey);
+            }
+            // 3.获取登录后的购物车数据【包含临时购物车数据与登录后的购物车数据】
+            final List<CartItem> cartItems = getCartItems(cartKey);
+            cart.setItems(cartItems);
+
+        } else {
+            // 2.没登录
+            final String cartKey = CART_PREFIX + userInfoTo.getUserKey();
+            // 获取临时购物车的所有购物项
+            final List<CartItem> cartItems = getCartItems(cartKey);
+            cart.setItems(cartItems);
+        }
+        return cart;
+    }
+
+    @Override
+    public void clearCart(final String cartkey) {
+        redisTemplate.delete(cartkey);
+    }
+
     /**
      * 获取我们要操作的购物车
      *
@@ -121,5 +160,14 @@ public class CartServiceImpl implements CartService {
         }
 
         return redisTemplate.boundHashOps(cartKey);
+    }
+
+    private List<CartItem> getCartItems(final String cartKey) {
+        final BoundHashOperations<String, Object, Object> hashOps = redisTemplate.boundHashOps(cartKey);
+        final List<Object> values = hashOps.values();
+        if (values != null && values.size() > 0) {
+            return values.stream().map(obj -> JSON.parseObject(obj.toString(), CartItem.class)).collect(Collectors.toList());
+        }
+        return null;
     }
 }
