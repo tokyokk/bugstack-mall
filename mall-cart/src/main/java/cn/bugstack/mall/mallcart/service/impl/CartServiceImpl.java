@@ -16,6 +16,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -148,7 +149,7 @@ public class CartServiceImpl implements CartService {
     @Override
     public void checkItem(final Long skuId, final Integer check) {
         final CartItem cartItem = getCartItem(skuId);
-        cartItem.setCheck(check == 1 ? true : false);
+        cartItem.setCheck(check == 1);
         final String cartJson = JSON.toJSONString(cartItem);
         final BoundHashOperations<String, Object, Object> hashOps = getCartOps();
         hashOps.put(skuId.toString(), cartJson);
@@ -189,9 +190,9 @@ public class CartServiceImpl implements CartService {
     private List<CartItem> getCartItems(final String cartKey) {
         final BoundHashOperations<String, Object, Object> hashOps = redisTemplate.boundHashOps(cartKey);
         final List<Object> values = hashOps.values();
-        if (values != null && values.size() > 0) {
+        if (values != null && !values.isEmpty()) {
             return values.stream().map(obj -> JSON.parseObject(obj.toString(), CartItem.class)).collect(Collectors.toList());
         }
-        return null;
+        return Collections.emptyList();
     }
 }
