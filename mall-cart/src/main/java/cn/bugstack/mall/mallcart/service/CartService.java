@@ -29,6 +29,11 @@ public interface CartService {
      */
     CartItem getCartItem(Long skuId);
 
+    /**
+     * 获取购物车
+     *
+     * @return Cart
+     */
     Cart getCart();
 
     /**
@@ -38,9 +43,26 @@ public interface CartService {
      */
     void clearCart(String cartkey);
 
+    /**
+     * 修改购物车商品选中状态
+     *
+     * @param skuId 商品ID
+     * @param check 选中状态
+     */
     void checkItem(Long skuId, Integer check);
 
+    /**
+     * 修改购物车商品数量
+     *
+     * @param skuId 商品ID
+     * @param num   商品数量
+     */
     void changeCountItem(Long skuId, Integer num);
 
+    /**
+     * 删除购物车商品
+     *
+     * @param skuId 商品ID
+     */
     void deleteItem(Long skuId);
 }
