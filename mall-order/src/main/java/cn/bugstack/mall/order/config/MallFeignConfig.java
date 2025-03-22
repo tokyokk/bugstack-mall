@@ -28,11 +28,12 @@ public class MallFeignConfig {
                 // 1.RequestContextHolder拿到刚进来的这个请求
                 ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
                 HttpServletRequest request = attributes.getRequest(); // 老请求
-                String cookie = request.getHeader("Cookie");
-                // 新请求（同步请求头数据）：Cookie
-                template.header("Cookie", cookie);
-
-                System.out.println("feign远程调用之前先执行RequestInterceptor.apply()");
+                if (request != null) {
+                    String cookie = request.getHeader("Cookie");
+                    // 新请求（同步请求头数据）：Cookie
+                    template.header("Cookie", cookie);
+                    System.out.println("feign远程调用之前先执行RequestInterceptor.apply()");
+                }
             }
         };
     }

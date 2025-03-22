@@ -16,6 +16,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import javax.validation.Valid;
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
@@ -179,8 +180,9 @@ public class CartServiceImpl implements CartService {
             return cartItems.stream().filter(CartItem::getCheck).map(item -> {
                 final Long skuId = item.getSkuId();
                 // 获取最新的价格
-                final BigDecimal price = productFeignService.getPrice(skuId);
-                item.setPrice(price);
+                final R r = productFeignService.getPrice(skuId);
+                String data = (String) r.get("data");
+                item.setPrice(new BigDecimal(data));
                 return item;
             }).collect(Collectors.toList());
         }
