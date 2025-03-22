@@ -12,7 +12,7 @@ import org.springframework.session.data.redis.config.annotation.web.http.EnableR
  * @description
  * @date 2025/2/17 19:59
  * @github https://github.com/tokyokk
- * @copyright 博客：http://bugstack.top - 沉淀、分享、成长。让自己和他人都有所收获！
+ * @copyright 博客：http://bugstack.cc - 沉淀、分享、成长。让自己和他人都有所收获！
  */
 @EnableRedisHttpSession // 整合redis作为session存储，高版本可能不需要开启
 @EnableFeignClients(basePackages = {"cn.bugstack.mall.product.feign"})

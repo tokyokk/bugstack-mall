@@ -1,7 +1,5 @@
 package cn.bugstack.mall.product.config;
 
-import com.alibaba.fastjson.support.spring.FastJsonRedisSerializer;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.cache.CacheProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cache.annotation.EnableCaching;
@@ -17,7 +15,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
  * @description
  * @date 2025/3/4 16:52
  * @github https://github.com/tokyokk
- * @copyright 博客：http://bugstack.top - 沉淀、分享、成长。让自己和他人都有所收获！
+ * @copyright 博客：http://bugstack.cc - 沉淀、分享、成长。让自己和他人都有所收获！
  *
  *
  * Spring-Cache不足：
@@ -50,13 +48,13 @@ public class CacheConfig {
      *      @EnableConfigurationProperties(CacheProperties.class)
      */
     @Bean
-    public RedisCacheConfiguration redisCacheConfiguration(CacheProperties cacheProperties) { // 这里方法传的所有参数都会从容器中确定，所以这样传递
+    public RedisCacheConfiguration redisCacheConfiguration(final CacheProperties cacheProperties) { // 这里方法传的所有参数都会从容器中确定，所以这样传递
         RedisCacheConfiguration configuration = RedisCacheConfiguration.defaultCacheConfig();
 
         configuration = configuration.serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()));
         configuration = configuration.serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer()));
 
-        CacheProperties.Redis redisProperties = cacheProperties.getRedis();
+        final CacheProperties.Redis redisProperties = cacheProperties.getRedis();
         // 设置让配置文件中的配置生效
         if (redisProperties.getTimeToLive() != null) {
             configuration = configuration.entryTtl(redisProperties.getTimeToLive());

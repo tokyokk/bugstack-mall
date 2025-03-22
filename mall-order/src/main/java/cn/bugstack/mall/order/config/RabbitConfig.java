@@ -17,7 +17,7 @@ import javax.annotation.PostConstruct;
  * @description
  * @date 2025/3/22 14:44
  * @github https://github.com/tokyokk
- * @copyright 博客：http://bugstack.top - 沉淀、分享、成长。让自己和他人都有所收获！
+ * @copyright 博客：http://bugstack.cc - 沉淀、分享、成长。让自己和他人都有所收获！
  */
 @Slf4j
 @Configuration

@@ -17,7 +17,7 @@ import javax.servlet.http.HttpSession;
  * @description 在执行目标方法之前，判断用户的登录状态，传递给Controller目标方法
  * @date 2025/3/15 18:28
  * @github https://github.com/tokyokk
- * @copyright 博客：http://bugstack.top - 沉淀、分享、成长。让自己和他人都有所收获！
+ * @copyright 博客：http://bugstack.cc - 沉淀、分享、成长。让自己和他人都有所收获！
  */
 public class CartInterceptor implements HandlerInterceptor {
 

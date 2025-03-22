@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
  * @description
  * @date 2025/2/23 20:30
  * @github https://github.com/tokyokk
- * @copyright 博客：http://bugstack.top - 沉淀、分享、成长。让自己和他人都有所收获！
+ * @copyright 博客：http://bugstack.cc - 沉淀、分享、成长。让自己和他人都有所收获！
  */
 @Configuration
 @EnableTransactionManagement
