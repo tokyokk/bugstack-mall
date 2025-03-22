@@ -90,6 +90,7 @@ public class RabbitConfig {
             }
         });
 
+        // 消息序列化
         rabbitTemplate.setMessageConverter(messageConverter());
     }
 }
