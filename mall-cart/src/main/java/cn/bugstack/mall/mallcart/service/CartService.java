@@ -3,6 +3,8 @@ package cn.bugstack.mall.mallcart.service;
 import cn.bugstack.mall.mallcart.vo.Cart;
 import cn.bugstack.mall.mallcart.vo.CartItem;
 
+import java.util.List;
+
 /**
  * @author micro, 微信：yykk、
  * @description
@@ -65,4 +67,6 @@ public interface CartService {
      * @param skuId 商品ID
      */
     void deleteItem(Long skuId);
+
+    List<CartItem> getUserCartItems();
 }

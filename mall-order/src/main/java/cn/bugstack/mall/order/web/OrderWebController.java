@@ -1,6 +1,9 @@
 package cn.bugstack.mall.order.web;
 
+import cn.bugstack.mall.order.service.impl.OrderServiceImpl;
+import cn.bugstack.mall.order.vo.OrderConfirmVO;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
 /**
@@ -13,8 +16,16 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Controller
 public class OrderWebController {
 
+    private final OrderServiceImpl orderService;
+
+    public OrderWebController(OrderServiceImpl orderService) {
+        this.orderService = orderService;
+    }
+
     @GetMapping("toTrade")
-    public String toTrade() {
+    public String toTrade(Model model) {
+        OrderConfirmVO orderConfirmVO = orderService.confirmOrder();
+        model.addAttribute("orderConfirmData", orderConfirmVO);
         return "confirm";
     }
 }

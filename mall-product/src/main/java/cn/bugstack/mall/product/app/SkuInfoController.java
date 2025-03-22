@@ -1,14 +1,11 @@
 package cn.bugstack.mall.product.app;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import cn.bugstack.mall.product.entity.SkuInfoEntity;
 import cn.bugstack.mall.product.service.SkuInfoService;
@@ -28,6 +25,16 @@ import cn.bugstack.common.utils.R;
 public class SkuInfoController {
     @Autowired
     private SkuInfoService skuInfoService;
+
+    /**
+     * 获取商品价格
+     * @param skuId skuId
+     * @return 商品价格
+     */
+    @GetMapping("/{skuId}/price")
+    public BigDecimal getPrice(@PathVariable("skuId") Long skuId) {
+        return skuInfoService.getById(skuId).getPrice();
+    }
 
     /**
      * 列表

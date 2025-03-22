@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.servlet.http.HttpSession;
+import java.util.List;
 
 /**
  * @author micro, 微信：yykk、
@@ -24,6 +25,15 @@ import javax.servlet.http.HttpSession;
 public class CartController {
 
     private final CartService cartService;
+
+    /**
+     * 获取当前用户的购物车项
+     * @return {@link Cart }
+     */
+    @GetMapping("/currentUserCartItems")
+    public List<CartItem> getCurrentUserCartItems() {
+        return cartService.getUserCartItems();
+    }
 
     /**
      * 删除购物项
