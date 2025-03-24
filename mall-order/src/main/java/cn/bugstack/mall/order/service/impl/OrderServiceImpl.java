@@ -1,6 +1,5 @@
 package cn.bugstack.mall.order.service.impl;
 
-import cn.bugstack.common.to.SkuHasStockVO;
 import cn.bugstack.common.utils.R;
 import cn.bugstack.common.vo.MemberResponseVO;
 import cn.bugstack.mall.order.feign.CartFeignService;
@@ -61,7 +60,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
     @Override
     public OrderConfirmVO confirmOrder() {
         OrderConfirmVO orderConfirmVO = new OrderConfirmVO();
-        MemberResponseVO memberResponseVO = LoginUserInterceptor.loginUser.get();
+        MemberResponseVO memberResponseVO = LoginUserInterceptor.LOGIN_USER.get();
 
         // 解决feign异步调用丢失请求信息的问题
         RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
