@@ -1,10 +1,10 @@
 package cn.bugstack.mall.ware.service;
 
+import cn.bugstack.mall.ware.vo.FareVO;
 import com.baomidou.mybatisplus.extension.service.IService;
 import cn.bugstack.common.utils.PageUtils;
 import cn.bugstack.mall.ware.entity.WareInfoEntity;
 
-import java.math.BigDecimal;
 import java.util.Map;
 
 /**
@@ -18,6 +18,6 @@ public interface WareInfoService extends IService<WareInfoEntity> {
 
     PageUtils queryPage(Map<String, Object> params);
 
-    BigDecimal getFare(Long addrId);
+    FareVO getFare(Long addrId);
 }
 
