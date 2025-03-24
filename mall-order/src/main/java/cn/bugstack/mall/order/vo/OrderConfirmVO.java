@@ -8,6 +8,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author micro, 微信：yykk、
@@ -49,6 +50,20 @@ public class OrderConfirmVO implements Serializable {
     @Getter
     @Setter
     private String orderToken;
+
+    @Getter
+    @Setter
+    private Map<Long,Boolean> stocks;
+
+    public Integer getCount() {
+        Integer i = 0;
+        if (items != null) {
+            for (OrderItemVO item : items) {
+                i += item.getCount();
+            }
+        }
+        return i;
+    }
 
     /**
      * 订单总额

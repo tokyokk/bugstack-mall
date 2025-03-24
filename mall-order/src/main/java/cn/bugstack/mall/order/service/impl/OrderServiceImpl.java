@@ -1,18 +1,24 @@
 package cn.bugstack.mall.order.service.impl;
 
+import cn.bugstack.common.to.SkuHasStockVO;
+import cn.bugstack.common.utils.R;
 import cn.bugstack.common.vo.MemberResponseVO;
 import cn.bugstack.mall.order.feign.CartFeignService;
 import cn.bugstack.mall.order.feign.MemberFeignService;
+import cn.bugstack.mall.order.feign.WmsFeignService;
 import cn.bugstack.mall.order.interceptor.LoginUserInterceptor;
 import cn.bugstack.mall.order.vo.MemberAddressVO;
 import cn.bugstack.mall.order.vo.OrderConfirmVO;
 import cn.bugstack.mall.order.vo.OrderItemVO;
+import cn.bugstack.mall.order.vo.SkuStockVO;
+import com.alibaba.fastjson.TypeReference;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.stream.Collectors;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -33,11 +39,13 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
     private final MemberFeignService memberFeignService;
     private final CartFeignService cartFeignService;
     private final ThreadPoolExecutor threadPoolExecutor;
+    private final WmsFeignService wmsFeignService;
 
-    public OrderServiceImpl(MemberFeignService memberFeignService, CartFeignService cartFeignService, ThreadPoolExecutor threadPoolExecutor) {
+    public OrderServiceImpl(MemberFeignService memberFeignService, CartFeignService cartFeignService, ThreadPoolExecutor threadPoolExecutor, WmsFeignService wmsFeignService) {
         this.memberFeignService = memberFeignService;
         this.cartFeignService = cartFeignService;
         this.threadPoolExecutor = threadPoolExecutor;
+        this.wmsFeignService = wmsFeignService;
     }
 
     @Override
@@ -72,7 +80,15 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
             List<OrderItemVO> items = cartFeignService.getCurrentUserCartItems();
             orderConfirmVO.setItems(items);
             // feign在调用请求之前要构造一个请求，调用很多拦截器
-        }, threadPoolExecutor);
+        }, threadPoolExecutor).thenRunAsync(()->{
+            List<OrderItemVO> items = orderConfirmVO.getItems();
+            List<Long> skuIds = items.stream().map(OrderItemVO::getSkuId).collect(Collectors.toList());
+            R r = wmsFeignService.getSkuHasStock(skuIds);
+            List<SkuStockVO> data = r.getData(new TypeReference<List<SkuStockVO>>() {
+            });
+            Map<Long, Boolean> stockMap = data.stream().collect(Collectors.toMap(SkuStockVO::getSkuId, SkuStockVO::getHasStock));
+            orderConfirmVO.setStocks(stockMap);
+        },threadPoolExecutor);
 
 
         // 3.查询用户积分
