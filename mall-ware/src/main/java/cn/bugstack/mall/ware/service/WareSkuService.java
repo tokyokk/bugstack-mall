@@ -1,6 +1,7 @@
 package cn.bugstack.mall.ware.service;
 
 import cn.bugstack.mall.ware.vo.SkuHasStockVO;
+import cn.bugstack.mall.ware.vo.WareSkuLockVO;
 import com.baomidou.mybatisplus.extension.service.IService;
 import cn.bugstack.common.utils.PageUtils;
 import cn.bugstack.mall.ware.entity.WareSkuEntity;
@@ -22,5 +23,7 @@ public interface WareSkuService extends IService<WareSkuEntity> {
     void addStock(Long skuId, Long wareId, Integer skuNum);
 
     List<SkuHasStockVO> getSkuHasStock(List<Long> skuIds);
+
+    Boolean orderLockStock(WareSkuLockVO skuLockVO);
 }
 

@@ -16,14 +16,15 @@ public enum BizCodeEnum {
 
     /**
      * 参数列表：
-     *  10：通用
-     *      001 ：参数格式校验
-     *      002 ：短信验证码校验失败
-     *  11 ：商品服务
-     *  12 ：订单服务
-     *  13 ：购物车
-     *  14 ：物流
-     *  15 ：用户
+     * 10：通用
+     * 001 ：参数格式校验
+     * 002 ：短信验证码校验失败
+     * 11 ：商品服务
+     * 12 ：订单服务
+     * 13 ：购物车
+     * 14 ：物流
+     * 15 ：用户
+     * 21: 库存
      */
 
     // 参数校验失败
@@ -33,7 +34,8 @@ public enum BizCodeEnum {
     PRODUCT_UP_EXCEPTION(110000, "商品上架异常"),
     USER_EXIST_EXCEPTION(150001, "用户已经存在"),
     PHONE_EXIST_EXCEPTION(150002, "手机号已经存在"),
-    LOGIN_ACCOUNT_PASSWORD_INVALID_EXCEPTION(150003, "账号或密码错误" );
+    NOT_STOCK_EXCEPTION(210000, "商品库存不足"),
+    LOGIN_ACCOUNT_PASSWORD_INVALID_EXCEPTION(150003, "账号或密码错误");
 
     private Integer code;
     private String msg;

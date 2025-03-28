@@ -1,6 +1,8 @@
 package cn.bugstack.mall.order.service;
 
 import cn.bugstack.mall.order.vo.OrderConfirmVO;
+import cn.bugstack.mall.order.vo.OrderSubmitVo;
+import cn.bugstack.mall.order.vo.SubmitOrderResponseVO;
 import com.baomidou.mybatisplus.extension.service.IService;
 import cn.bugstack.common.utils.PageUtils;
 import cn.bugstack.mall.order.entity.OrderEntity;
@@ -19,5 +21,7 @@ public interface OrderService extends IService<OrderEntity> {
     PageUtils queryPage(Map<String, Object> params);
 
     OrderConfirmVO confirmOrder();
+
+    SubmitOrderResponseVO submitOrder(OrderSubmitVo orderSubmitVo);
 }
 

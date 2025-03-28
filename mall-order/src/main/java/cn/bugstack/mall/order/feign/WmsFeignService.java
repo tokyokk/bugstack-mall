@@ -1,9 +1,9 @@
 package cn.bugstack.mall.order.feign;
 
 import cn.bugstack.common.utils.R;
+import cn.bugstack.mall.order.vo.WareSkuLockVO;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -22,4 +22,13 @@ public interface WmsFeignService {
      */
     @PostMapping("/ware/waresku/hasstock")
     public R getSkuHasStock(@RequestBody List<Long> skuIds);
+
+    /**
+     * 获取运费信息
+     */
+    @GetMapping("/ware/wareinfo/fare")
+    public R getFare(@RequestParam("addrId") Long addrId);
+
+    @RequestMapping("/ware/waresku/lock/order")
+    public R orderLockStock(@RequestBody WareSkuLockVO skuLockVO);
 }

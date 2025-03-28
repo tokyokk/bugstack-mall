@@ -334,4 +334,15 @@ public class SpuInfoServiceImpl extends ServiceImpl<SpuInfoDao, SpuInfoEntity> i
         }
     }
 
+    @Override
+    public SpuInfoEntity getSpuInfoBySkuId(Long skuId) {
+        return Optional.ofNullable(skuInfoService.getById(skuId))
+                .map(SkuInfoEntity::getSpuId)
+                .flatMap(spuId -> {
+                    SpuInfoEntity spuInfo = baseMapper.selectById(spuId);
+                    return Optional.ofNullable(spuInfo);
+                })
+                .orElse(null);
+    }
+
 }
