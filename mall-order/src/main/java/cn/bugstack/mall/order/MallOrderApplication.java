@@ -28,6 +28,20 @@ import org.springframework.session.data.redis.config.annotation.web.http.EnableR
  *              对外暴露代理对象
  *      3)、本类互调用代理对象调用:
  *          OrderService  o = (OrderService) AopContext.currentProxy(); 强制转换为自己的借口或者实现类
+ *
+ *    Seata控制分布式事务：
+ *      1）、引入seata的依赖
+ *      2）、安装事物协调器：seata-server：https://github.com/apache/incubator-seata/releases
+ *      3）、整合步骤
+ *          1）、引入seata的依赖：spring-cloud-starter-alibaba-seata seata-all-0.7.1
+ *          2)、启动seata-server
+ *              registry.conf:注册中心配置：修改registry type=nacos
+ *              file.conf:
+ *          3）、全局事务：@GlobalTransaction，每一个远程的小事务使用@Transaction
+ *          4）、所有想要用到分布式事务的微服务使用seata DataSourceProxy代理自己的数据源
+ *          5）、每一个微服务导入
+ *              file.conf：vgroup_mapping.{application.name}-fescar-service-group = ‘default’
+ *              registry.conf
  */
 @EnableAspectJAutoProxy(exposeProxy = true)
 @EnableRedisHttpSession

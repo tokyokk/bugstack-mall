@@ -9,7 +9,6 @@
     <packaging>pom</packaging>
     <description>谷粒商城-聚合工程</description>
 
-
     <modules>
         <module>mall-ware</module>
         <module>mall-order</module>
