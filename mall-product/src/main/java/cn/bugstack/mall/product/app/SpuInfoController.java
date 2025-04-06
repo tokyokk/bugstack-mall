@@ -23,6 +23,7 @@ import cn.bugstack.common.utils.R;
 @RestController
 @RequestMapping("product/spuinfo")
 public class SpuInfoController {
+
     @Autowired
     private SpuInfoService spuInfoService;
 
@@ -58,10 +59,8 @@ public class SpuInfoController {
      * 信息
      */
     @RequestMapping("/info/{id}")
-    // @RequiresPermissions("product:spuinfo:info")
     public R info(@PathVariable("id") Long id) {
         SpuInfoEntity spuInfo = spuInfoService.getById(id);
-
         return R.ok().put("spuInfo", spuInfo);
     }
 
@@ -78,10 +77,8 @@ public class SpuInfoController {
      * 修改
      */
     @RequestMapping("/update")
-    // @RequiresPermissions("product:spuinfo:update")
     public R update(@RequestBody SpuInfoEntity spuInfo) {
         spuInfoService.updateById(spuInfo);
-
         return R.ok();
     }
 
@@ -89,10 +86,8 @@ public class SpuInfoController {
      * 删除
      */
     @RequestMapping("/delete")
-    // @RequiresPermissions("product:spuinfo:delete")
     public R delete(@RequestBody Long[] ids) {
         spuInfoService.removeByIds(Arrays.asList(ids));
-
         return R.ok();
     }
 

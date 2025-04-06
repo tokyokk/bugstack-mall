@@ -127,7 +127,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
         return orderConfirmVO;
     }
 
-    @GlobalTransactional
+    // @GlobalTransactional // 高并发场景并不适用
     @Transactional(rollbackFor = Exception.class)
     @Override
     public SubmitOrderResponseVO submitOrder(final OrderSubmitVo orderSubmitVo) {
@@ -169,6 +169,8 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
                 }).collect(Collectors.toList());
                 wareSkuLockVO.setLocks(locks);
                 ORDER_CONFIRM_THREAD_LOCAL.remove();
+                // 为了保证高并发，库存服务自己回滚，可以发消息给库存服务
+                // 库存服务本身也可以使用自动解锁模式 消息队列
                 final R r = wmsFeignService.orderLockStock(wareSkuLockVO);
                 if (r.getCode() == 0) {
                     // 锁定成功
