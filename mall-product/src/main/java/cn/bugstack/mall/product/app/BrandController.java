@@ -30,17 +30,19 @@ import cn.bugstack.common.utils.R;
 @RestController
 @RequestMapping("product/brand")
 public class BrandController {
-    @Autowired
-    private BrandService brandService;
+
+    private final BrandService brandService;
+
+    public BrandController(BrandService brandService) {
+        this.brandService = brandService;
+    }
 
     /**
      * 列表
      */
     @RequestMapping("/list")
-    // @RequiresPermissions("product:brand:list")
     public R list(@RequestParam Map<String, Object> params) {
         PageUtils page = brandService.queryPage(params);
-
         return R.ok().put("page", page);
     }
 
@@ -49,10 +51,8 @@ public class BrandController {
      * 信息
      */
     @RequestMapping("/info/{brandId}")
-    // @RequiresPermissions("product:brand:info")
     public R info(@PathVariable("brandId") Long brandId) {
         BrandEntity brand = brandService.getById(brandId);
-
         return R.ok().put("brand", brand);
     }
 
@@ -98,7 +98,6 @@ public class BrandController {
     @RequestMapping("/update")
     public R update(@RequestBody @Validated({UpdateGroup.class}) BrandEntity brand) {
         brandService.updateDetail(brand);
-
         return R.ok();
     }
 
@@ -106,10 +105,8 @@ public class BrandController {
      * 删除
      */
     @RequestMapping("/delete")
-    // @RequiresPermissions("product:brand:delete")
     public R delete(@RequestBody Long[] brandIds) {
         brandService.removeByIds(Arrays.asList(brandIds));
-
         return R.ok();
     }
 
