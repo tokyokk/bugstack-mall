@@ -193,6 +193,11 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
         // }
     }
 
+    @Override
+    public OrderEntity getOrderStatusByOrderSn(String orderSn) {
+        return this.getOne(new QueryWrapper<OrderEntity>().eq("order_sn", orderSn));
+    }
+
     private void saveOrder(final OrderCreateTO order) {
         final OrderEntity orderEntity = order.getOrder();
         orderEntity.setDeleteStatus(0);

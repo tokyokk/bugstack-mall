@@ -24,8 +24,11 @@ import java.util.Map;
 @Configuration
 public class RabbitMqConfig {
 
-    @Autowired
-    private RabbitTemplate rabbitTemplate;
+    private final RabbitTemplate rabbitTemplate;
+
+    public RabbitMqConfig(RabbitTemplate rabbitTemplate) {
+        this.rabbitTemplate = rabbitTemplate;
+    }
 
     @Bean
     public MessageConverter messageConverter() {

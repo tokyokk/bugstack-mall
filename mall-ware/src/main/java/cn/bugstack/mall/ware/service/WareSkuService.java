@@ -1,5 +1,6 @@
 package cn.bugstack.mall.ware.service;
 
+import cn.bugstack.common.to.mq.StockLockedTO;
 import cn.bugstack.mall.ware.vo.SkuHasStockVO;
 import cn.bugstack.mall.ware.vo.WareSkuLockVO;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -25,5 +26,7 @@ public interface WareSkuService extends IService<WareSkuEntity> {
     List<SkuHasStockVO> getSkuHasStock(List<Long> skuIds);
 
     Boolean orderLockStock(WareSkuLockVO skuLockVO);
+
+    void unLockStock(StockLockedTO lockedTO);
 }
 

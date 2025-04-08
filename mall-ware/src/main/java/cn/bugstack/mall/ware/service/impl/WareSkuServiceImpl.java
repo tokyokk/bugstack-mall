@@ -6,13 +6,13 @@ import cn.bugstack.common.utils.R;
 import cn.bugstack.mall.ware.entity.WareOrderTaskDetailEntity;
 import cn.bugstack.mall.ware.entity.WareOrderTaskEntity;
 import cn.bugstack.mall.ware.exception.NotStockException;
+import cn.bugstack.mall.ware.feign.OrderFeignService;
 import cn.bugstack.mall.ware.feign.ProductFeignService;
 import cn.bugstack.mall.ware.service.WareOrderTaskDetailService;
 import cn.bugstack.mall.ware.service.WareOrderTaskService;
-import cn.bugstack.mall.ware.vo.LockStockResult;
-import cn.bugstack.mall.ware.vo.OrderItemVO;
-import cn.bugstack.mall.ware.vo.SkuHasStockVO;
-import cn.bugstack.mall.ware.vo.WareSkuLockVO;
+import cn.bugstack.mall.ware.vo.*;
+import com.alibaba.fastjson.TypeReference;
+import com.rabbitmq.client.Channel;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -24,6 +24,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -43,7 +44,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 
-@RabbitListener(queues = "stock.release.stock.queue")
 @Slf4j
 @Service("wareSkuService")
 public class WareSkuServiceImpl extends ServiceImpl<WareSkuDao, WareSkuEntity> implements WareSkuService {
@@ -53,39 +53,27 @@ public class WareSkuServiceImpl extends ServiceImpl<WareSkuDao, WareSkuEntity> i
     private final RabbitTemplate rabbitTemplate;
     private final WareOrderTaskService wareOrderTaskService;
     private final WareOrderTaskDetailService wareOrderTaskDetailService;
+    private final OrderFeignService orderFeignService;
 
-    public WareSkuServiceImpl(ProductFeignService productFeignService, WareSkuDao wareSkuDao, RabbitTemplate rabbitTemplate, WareOrderTaskService wareOrderTaskService, WareOrderTaskDetailService wareOrderTaskDetailService) {
+    public WareSkuServiceImpl(ProductFeignService productFeignService, WareSkuDao wareSkuDao, RabbitTemplate rabbitTemplate, WareOrderTaskService wareOrderTaskService, WareOrderTaskDetailService wareOrderTaskDetailService, OrderFeignService orderFeignService) {
         this.productFeignService = productFeignService;
         this.wareSkuDao = wareSkuDao;
         this.rabbitTemplate = rabbitTemplate;
         this.wareOrderTaskService = wareOrderTaskService;
         this.wareOrderTaskDetailService = wareOrderTaskDetailService;
+        this.orderFeignService = orderFeignService;
     }
 
-    /**
-     * 1、库存自动解锁。
-     *      下订单成功，库存解锁成功，接下来的业务调用失败，导致订单回滚。之前锁定的库存就要自动解锁。使用seata太慢了
-     * 2、订单失败
-     *      锁库存失败
-     * @param lockedTO
-     * @param message
-     */
-    @RabbitHandler
-    public void handlerStockLockedRelease(StockLockedTO lockedTO, Message message) {
-        log.info("收到库存解锁的消息");
-        Long id = lockedTO.getId(); // 库存工作单的id
-        StockDetailTO detail = lockedTO.getDetail();
-        Long detailId = detail.getId();
-        // 解锁
-        // 1、查询数据库这个订单的锁定库存信息
-        // 有
-        // 没有：库存锁定失败了，库存回滚了。这种情况无需解锁
-        WareOrderTaskDetailEntity orderTaskDetail = wareOrderTaskDetailService.getById(detailId);
-        if (Objects.nonNull(orderTaskDetail)) {
-            // 解锁
-        } else {
-            // 无需解锁
-        }
+
+
+    private void unLockStock(Long skuId, Long wareId, Integer num,Long taskDetailId) {
+        // 库存解锁
+        wareSkuDao.unlockStock(skuId, wareId, num);
+        // 更新库存工作单状态
+        WareOrderTaskDetailEntity wareOrderTaskDetailEntity = new WareOrderTaskDetailEntity();
+        wareOrderTaskDetailEntity.setId(taskDetailId);
+        wareOrderTaskDetailEntity.setLockStatus(2); // 已解锁
+        wareOrderTaskDetailService.updateById(wareOrderTaskDetailEntity);
     }
 
     @Override
@@ -222,8 +210,52 @@ public class WareSkuServiceImpl extends ServiceImpl<WareSkuDao, WareSkuEntity> i
         return true;
 }
 
-@Data
-class SkuWareHasStock {
+    @Override
+    public void unLockStock(StockLockedTO lockedTO) {
+        log.info("收到库存解锁的消息");
+        StockDetailTO detail = lockedTO.getDetail();
+        Long detailId = detail.getId();
+        // 解锁
+        // 1、查询数据库这个订单的锁定库存信息
+        // 有：证明库存锁定成功了
+        //      解锁：要看订单情况。
+        //。       1.没有这个订单：必须解锁。
+        //。       2.有这个订单：要看订单的状态
+        //。          1.已取消：解锁库存
+        //。          2.没取消：不能解锁
+        WareOrderTaskDetailEntity orderTaskDetail = wareOrderTaskDetailService.getById(detailId);
+        if (Objects.nonNull(orderTaskDetail)) {
+            // 解锁
+            Long id = lockedTO.getId(); // 库存工作单的id
+            WareOrderTaskEntity taskEntity = wareOrderTaskService.getById(id);
+            String orderSn = taskEntity.getOrderSn();
+            // 根据订单号查询订单状态
+            R orderResult = orderFeignService.getOrderStatusByOrderSn(orderSn);
+            if (orderResult.getCode() == 0) {
+                OrderVO data = orderResult.getData(new TypeReference<OrderVO>() {
+                });
+                if (data == null || data.getStatus() == 4) {
+                    // 订单不存在
+                    // 订单已取消，解锁库存
+                    if (orderTaskDetail.getLockStatus() == 1) {
+                        // 当前库存工作单详情，只有状态为1，已锁定当时未解锁才可以解锁
+                        unLockStock(detail.getSkuId(), detail.getWareId(), detail.getSkuNum(), detailId);
+                    }
+                    // channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
+                }
+            } else {
+                // 消息拒绝，重新翻到队列中，让别人继续消费解锁。
+                // channel.basicReject(message.getMessageProperties().getDeliveryTag(),true);
+                throw new RuntimeException("远程服务调用失败！");
+            }
+        } else {
+            // 无需解锁
+            // channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
+        }
+    }
+
+    @Data
+    class SkuWareHasStock {
     private Long skuId;
     private Integer num;
     private List<Long> wareId;
