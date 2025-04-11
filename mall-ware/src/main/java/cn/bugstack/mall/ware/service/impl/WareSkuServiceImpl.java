@@ -1,5 +1,6 @@
 package cn.bugstack.mall.ware.service.impl;
 
+import cn.bugstack.common.to.OrderTO;
 import cn.bugstack.common.to.mq.StockDetailTO;
 import cn.bugstack.common.to.mq.StockLockedTO;
 import cn.bugstack.common.utils.R;
@@ -197,7 +198,7 @@ public class WareSkuServiceImpl extends ServiceImpl<WareSkuDao, WareSkuEntity> i
                     BeanUtils.copyProperties(entity,stockDetailTO);
                     // 只发id不行，防止前面的数据回滚找不到数据
                     stockLockedTO.setDetail(stockDetailTO);
-                    
+
                     rabbitTemplate.convertAndSend("stock-event-exchange","stock-locked",stockLockedTO);
                     break;
                 }
@@ -252,6 +253,28 @@ public class WareSkuServiceImpl extends ServiceImpl<WareSkuDao, WareSkuEntity> i
             // 无需解锁
             // channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
         }
+    }
+
+    /**
+     * 防止订单服务卡顿，导致订单状态消息一直改不了，库存消息优先到期。查订单状态新建状态，什么都不做就走了。
+     * 导致卡顿的订单永远无法解锁库存
+     * @param orderTo
+     */
+    @Transactional(rollbackFor = Exception.class, readOnly = false)
+    @Override
+    public void unLockStock(OrderTO orderTo) {
+        String orderSn = orderTo.getOrderSn();
+        // 查询最新的订单状态
+        WareOrderTaskEntity taskEntity = wareOrderTaskService.getOrderTaskByOrderSn(orderSn);
+        Long taskId = taskEntity.getId();
+        // 按照库存工作单id查询库存锁定详情
+        List<WareOrderTaskDetailEntity> detailEntityList = wareOrderTaskDetailService.list(
+                new QueryWrapper<WareOrderTaskDetailEntity>().eq("task_id", taskId).eq("lock_status", 1)
+        );
+        for (WareOrderTaskDetailEntity detail : detailEntityList) {
+            unLockStock(detail.getSkuId(), detail.getWareId(), detail.getSkuNum(), detail.getId());
+        }
+
     }
 
     @Data

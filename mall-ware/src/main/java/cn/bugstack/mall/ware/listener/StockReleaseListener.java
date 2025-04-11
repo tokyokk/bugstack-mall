@@ -1,5 +1,6 @@
 package cn.bugstack.mall.ware.listener;
 
+import cn.bugstack.common.to.OrderTO;
 import cn.bugstack.common.to.mq.StockDetailTO;
 import cn.bugstack.common.to.mq.StockLockedTO;
 import cn.bugstack.common.utils.R;
@@ -50,6 +51,18 @@ public class StockReleaseListener {
 
         try {
             wareSkuService.unLockStock(lockedTO);
+            channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
+        } catch (Exception e) {
+            log.error("库存解锁失败：{}", e.getMessage());
+            channel.basicReject(message.getMessageProperties().getDeliveryTag(),true);
+        }
+    }
+
+    @SneakyThrows
+    @RabbitListener
+    public void handlerOrderCloseRelease(OrderTO orderTo, Message message, Channel channel) {
+        try {
+            wareSkuService.unLockStock(orderTo);
             channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
         } catch (Exception e) {
             log.error("库存解锁失败：{}", e.getMessage());

@@ -1,7 +1,10 @@
 package cn.bugstack.mall.ware.service.impl;
 
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import org.springframework.stereotype.Service;
+
 import java.util.Map;
+
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -24,6 +27,11 @@ public class WareOrderTaskServiceImpl extends ServiceImpl<WareOrderTaskDao, Ware
         );
 
         return new PageUtils(page);
+    }
+
+    @Override
+    public WareOrderTaskEntity getOrderTaskByOrderSn(String orderSn) {
+        return baseMapper.selectOne(Wrappers.<WareOrderTaskEntity>lambdaQuery().eq(WareOrderTaskEntity::getOrderSn, orderSn));
     }
 
 }
