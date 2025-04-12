@@ -66,6 +66,12 @@ public class RabbitConfig {
              */
             @Override
             public void confirm(final CorrelationData correlationData, final boolean ack, final String cause) {
+                // 服务器收到了
+                /*
+                * 1、做好消息确认机制（publisher，consumer【手动ack】）
+                * 2、每一个发送的消息都在数据库做好记录。定期将失败的消息再次发送
+                * */
+                // 修改消息的状态
                 if (ack) {
                     log.info("【消息发送成功】---> {}", correlationData.getId());
                 } else {
@@ -86,6 +92,7 @@ public class RabbitConfig {
              */
             @Override
             public void returnedMessage(final Message message, final int replyCode, final String replyText, final String exchange, final String routingKey) {
+                // 报错误了，修改数据库当前消息的状态--》错误
                 log.info("消息 {} 投递失败，应答码：{} 原因：{} 交换机: {} 路由键: {}", message, replyCode, replyText, exchange, routingKey);
             }
         });

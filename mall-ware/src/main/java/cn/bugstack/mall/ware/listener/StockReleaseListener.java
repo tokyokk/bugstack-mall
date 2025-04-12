@@ -50,6 +50,8 @@ public class StockReleaseListener {
     public void handlerStockLockedRelease(StockLockedTO lockedTO, Message message, Channel channel){
 
         try {
+            // 单前消息是否被第二次以后（重新）派发过来了。
+            Boolean redelivered = message.getMessageProperties().getRedelivered();
             wareSkuService.unLockStock(lockedTO);
             channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
         } catch (Exception e) {
