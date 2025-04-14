@@ -36,7 +36,7 @@ public class OrderItemServiceImpl extends ServiceImpl<OrderItemDao, OrderItemEnt
         return new PageUtils(page);
     }
 
-    /**
+    /*
      *  queues：声明需要监听的队列
      *  org.springframework.amqp.core.Message
      *  参数可以写一下：
