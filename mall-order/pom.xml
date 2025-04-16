@@ -46,6 +46,7 @@
                 </exclusion>
             </exclusions>
         </dependency>
+        <!--导入支付宝的SDK-->
         <dependency>
             <groupId>com.alipay.sdk</groupId>
             <artifactId>alipay-sdk-java</artifactId>

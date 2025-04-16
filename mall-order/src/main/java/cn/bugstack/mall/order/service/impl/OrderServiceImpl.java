@@ -24,10 +24,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import io.seata.spring.annotation.GlobalTransactional;
-import org.springframework.amqp.AmqpException;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
@@ -39,6 +36,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -59,11 +57,12 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
     private final ProductFeignService productFeignService;
     private final OrderItemServiceImpl orderItemService;
     private final RabbitTemplate rabbitTemplate;
+    private final OrderService orderService;
 
     public OrderServiceImpl(final MemberFeignService memberFeignService, final CartFeignService cartFeignService,
                             final ThreadPoolExecutor threadPoolExecutor, final WmsFeignService wmsFeignService,
                             final StringRedisTemplate redisTemplate, final ProductFeignService productFeignService,
-                            final OrderItemServiceImpl orderItemService, final RabbitTemplate rabbitTemplate) {
+                            final OrderItemServiceImpl orderItemService, final RabbitTemplate rabbitTemplate, OrderService orderService) {
         this.memberFeignService = memberFeignService;
         this.cartFeignService = cartFeignService;
         this.threadPoolExecutor = threadPoolExecutor;
@@ -72,6 +71,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
         this.productFeignService = productFeignService;
         this.orderItemService = orderItemService;
         this.rabbitTemplate = rabbitTemplate;
+        this.orderService = orderService;
     }
 
     @Override
@@ -227,6 +227,25 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
                 // todo：将每发送出去的消息进行重试操作重新发送
             }
         }
+    }
+
+    @Override
+    public PayVo getOrderPay(String orderSn) {
+        PayVo payVo = new PayVo();
+        OrderEntity order = orderService.getOrderStatusByOrderSn(orderSn);
+        if (order != null) {
+            List<OrderItemEntity> orderItemList = orderItemService.list(new QueryWrapper<OrderItemEntity>().eq("order_sn", orderSn));
+
+            // 找到第一项的skuName
+            orderItemList.stream().findFirst().ifPresent(item -> {
+                payVo.setSubject(item.getSkuName());
+            });
+            payVo.setOut_trade_no(order.getOrderSn());
+            String orderTotalAmount = order.getTotalAmount().setScale(2, RoundingMode.UP).toString();
+            payVo.setTotal_amount(orderTotalAmount);
+            payVo.setBody("订单：" + order.getOrderSn() + "支付成功");
+        }
+        return payVo;
     }
 
     private void saveOrder(final OrderCreateTO order) {
