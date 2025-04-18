@@ -27,7 +27,7 @@ public class LoginUserInterceptor implements HandlerInterceptor {
         String uri = request.getRequestURI();
         boolean match = new AntPathMatcher().match("/member/**", uri);
         if (match) {
-            return true;
+             return true;
         }
 
         MemberResponseVO attribute = (MemberResponseVO) request.getSession().getAttribute(AuthServerConstant.LOGIN_USER);

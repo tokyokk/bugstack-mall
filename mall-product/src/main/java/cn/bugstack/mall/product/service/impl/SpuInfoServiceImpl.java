@@ -13,7 +13,7 @@ import cn.bugstack.mall.product.feign.WareFeignService;
 import cn.bugstack.mall.product.service.*;
 import cn.bugstack.mall.product.vo.*;
 import com.alibaba.fastjson.TypeReference;
-import io.seata.spring.annotation.GlobalTransactional;
+// import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -82,7 +82,7 @@ public class SpuInfoServiceImpl extends ServiceImpl<SpuInfoDao, SpuInfoEntity> i
 
         return new PageUtils(page);
     }
-    @GlobalTransactional // 这里适合使用seata——AT模式
+    // @GlobalTransactional // 这里适合使用seata——AT模式
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void saveSpuInfo(SpuSaveVO vo) {

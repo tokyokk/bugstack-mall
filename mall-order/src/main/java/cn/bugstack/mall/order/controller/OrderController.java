@@ -46,6 +46,18 @@ public class OrderController {
         return R.ok().put("page", page);
     }
 
+    /**
+     * 分页查询当前用户的订单列表，包括订单详情信息。
+     *
+     * @param params 请求参数，可以包含分页参数、查询条件等
+     * @return 包含订单列表和分页信息的响应对象
+     */
+    @PostMapping("/listWithItem")
+    public R listWithItem(@RequestBody Map<String, Object> params) {
+        PageUtils page = orderService.queryPageWithItem(params);
+        return R.ok().put("page", page);
+    }
+
 
     /**
      * 信息

@@ -10,6 +10,7 @@ import cn.bugstack.mall.order.constant.OrderConstant;
 import cn.bugstack.mall.order.dao.OrderDao;
 import cn.bugstack.mall.order.entity.OrderEntity;
 import cn.bugstack.mall.order.entity.OrderItemEntity;
+import cn.bugstack.mall.order.entity.PaymentInfoEntity;
 import cn.bugstack.mall.order.enume.OrderStatusEnum;
 import cn.bugstack.mall.order.feign.CartFeignService;
 import cn.bugstack.mall.order.feign.MemberFeignService;
@@ -17,6 +18,7 @@ import cn.bugstack.mall.order.feign.ProductFeignService;
 import cn.bugstack.mall.order.feign.WmsFeignService;
 import cn.bugstack.mall.order.interceptor.LoginUserInterceptor;
 import cn.bugstack.mall.order.service.OrderService;
+import cn.bugstack.mall.order.service.PaymentInfoService;
 import cn.bugstack.mall.order.to.OrderCreateTO;
 import cn.bugstack.mall.order.vo.*;
 import com.alibaba.fastjson.TypeReference;
@@ -58,11 +60,12 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
     private final OrderItemServiceImpl orderItemService;
     private final RabbitTemplate rabbitTemplate;
     private final OrderService orderService;
+    private final PaymentInfoService paymentInfoService;
 
     public OrderServiceImpl(final MemberFeignService memberFeignService, final CartFeignService cartFeignService,
                             final ThreadPoolExecutor threadPoolExecutor, final WmsFeignService wmsFeignService,
                             final StringRedisTemplate redisTemplate, final ProductFeignService productFeignService,
-                            final OrderItemServiceImpl orderItemService, final RabbitTemplate rabbitTemplate, OrderService orderService) {
+                            final OrderItemServiceImpl orderItemService, final RabbitTemplate rabbitTemplate, OrderService orderService, PaymentInfoService paymentInfoService) {
         this.memberFeignService = memberFeignService;
         this.cartFeignService = cartFeignService;
         this.threadPoolExecutor = threadPoolExecutor;
@@ -72,6 +75,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
         this.orderItemService = orderItemService;
         this.rabbitTemplate = rabbitTemplate;
         this.orderService = orderService;
+        this.paymentInfoService = paymentInfoService;
     }
 
     @Override
@@ -246,6 +250,52 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
             payVo.setBody("订单：" + order.getOrderSn() + "支付成功");
         }
         return payVo;
+    }
+
+    @Override
+    public PageUtils queryPageWithItem(Map<String, Object> params) {
+        final IPage<OrderEntity> page = this.page(
+                new Query<OrderEntity>().getPage(params),
+                new QueryWrapper<OrderEntity>().eq("member_id", LoginUserInterceptor.LOGIN_USER.get().getId())
+                        .eq("delete_status", 0).orderByDesc("id")
+        );
+
+        List<OrderEntity> orderEntityList = page.getRecords().stream().map(order -> {
+            final List<OrderItemEntity> orderItems = orderItemService.list(
+                    new QueryWrapper<OrderItemEntity>().eq("order_sn", order.getOrderSn())
+            );
+            order.setItemEntities(orderItems);
+            return order;
+        }).collect(Collectors.toList());
+
+        page.setRecords(orderEntityList);
+
+        return new PageUtils(page);
+    }
+
+    /**
+     * 处理支付宝的支付接口
+     * @param vo
+     * @return
+     */
+    @Override
+    public String handlePayResult(PayAsyncVo vo) {
+        // 1.保存交易流水信息
+        PaymentInfoEntity paymentInfoEntity = new PaymentInfoEntity();
+        paymentInfoEntity.setOrderSn(vo.getOut_trade_no());
+        paymentInfoEntity.setAlipayTradeNo(vo.getTrade_no());
+        paymentInfoEntity.setTotalAmount(new BigDecimal(vo.getTotal_amount()));
+        paymentInfoEntity.setSubject(vo.getSubject());
+        paymentInfoEntity.setPaymentStatus(vo.getTrade_status());
+        paymentInfoEntity.setCreateTime(new Date());
+        paymentInfoEntity.setConfirmTime(vo.getNotify_time());
+        paymentInfoEntity.setCallbackTime(vo.getNotify_time());
+        paymentInfoService.save(paymentInfoEntity);
+        // 2.更新订单状态
+        if (vo.getTrade_status().equals("TRADE_SUCCESS") || vo.getTrade_status().equals("TRADE_FINISHED")) {
+            baseMapper.updateOrderStatus(vo.getOut_trade_no(),OrderStatusEnum.PAYED.getCode());
+        }
+        return "success";
     }
 
     private void saveOrder(final OrderCreateTO order) {

@@ -11,7 +11,6 @@
     <packaging>jar</packaging>
 
     <name>mall-common</name>
-    <url>http://maven.apache.org</url>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -93,7 +92,6 @@
             <artifactId>spring-session-data-redis</artifactId>
             <version>2.3.3.RELEASE</version>
         </dependency>
-
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>

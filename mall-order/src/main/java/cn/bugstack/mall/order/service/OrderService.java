@@ -1,9 +1,6 @@
 package cn.bugstack.mall.order.service;
 
-import cn.bugstack.mall.order.vo.OrderConfirmVO;
-import cn.bugstack.mall.order.vo.OrderSubmitVo;
-import cn.bugstack.mall.order.vo.PayVo;
-import cn.bugstack.mall.order.vo.SubmitOrderResponseVO;
+import cn.bugstack.mall.order.vo.*;
 import com.baomidou.mybatisplus.extension.service.IService;
 import cn.bugstack.common.utils.PageUtils;
 import cn.bugstack.mall.order.entity.OrderEntity;
@@ -36,5 +33,9 @@ public interface OrderService extends IService<OrderEntity> {
      * @return 订单支付信息
      */
     PayVo getOrderPay(String orderSn);
+
+    PageUtils queryPageWithItem(Map<String, Object> params);
+
+    String handlePayResult(PayAsyncVo asyncVo);
 }
 
