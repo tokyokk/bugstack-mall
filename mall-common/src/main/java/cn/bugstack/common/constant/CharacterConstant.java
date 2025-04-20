@@ -15,6 +15,11 @@ public interface CharacterConstant {
     public static final String UNDERLINE = "_";
 
     /**
+     * -
+     */
+    public static final String HYPHEN = "-";
+
+    /**
      * :
      */
     public static final String COLON = ":";

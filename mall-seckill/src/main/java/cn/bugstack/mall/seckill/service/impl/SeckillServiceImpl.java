@@ -1,5 +1,8 @@
 package cn.bugstack.mall.seckill.service.impl;
 
+import cn.bugstack.common.FeignCodeEnum;
+import cn.bugstack.common.constant.CharacterConstant;
+import cn.bugstack.common.constant.ProductConstant;
 import cn.bugstack.common.utils.R;
 import cn.bugstack.mall.seckill.feign.CouponFeignService;
 import cn.bugstack.mall.seckill.feign.ProductFeignService;
@@ -18,6 +21,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -57,7 +61,7 @@ public class SeckillServiceImpl implements SeckillService {
     public void uploadSeckillSkuLatest3Days() {
         // 1.扫描最近三天需要参加的活动
         R r = couponFeignService.getLatest3DaysSession();
-        if (r.getCode() == 0) {
+        if (Objects.equals(r.getCode(), FeignCodeEnum.SUCCESS.getCode())) {
             // 上架商品
             List<SeckillSessionsWithSkus> data = r.getData(new TypeReference<List<SeckillSessionsWithSkus>>() {
             });
@@ -73,12 +77,12 @@ public class SeckillServiceImpl implements SeckillService {
         sessionData.forEach(session -> {
             long startTime = session.getStartTime().getTime();
             long endTime = session.getEndTime().getTime();
-            String key = SESSIONS_CACHE_PREFIX + startTime + "_" + endTime;
+            String key = SESSIONS_CACHE_PREFIX + startTime + CharacterConstant.UNDERLINE + endTime;
             if (redisTemplate.hasKey(key)) {
                 return;
             }
 
-            List<String> skuIds = session.getRelationSkus().stream().map(item -> item.getPromotionSessionId() + "_" + item.getSkuId().toString()).collect(Collectors.toList());
+            List<String> skuIds = session.getRelationSkus().stream().map(item -> item.getPromotionSessionId() + CharacterConstant.UNDERLINE + item.getSkuId().toString()).collect(Collectors.toList());
             // 缓存活动信息
             redisTemplate.opsForList().leftPushAll(key, skuIds);
         });
@@ -89,14 +93,14 @@ public class SeckillServiceImpl implements SeckillService {
             BoundHashOperations<String, Object, Object> hashOps = redisTemplate.boundHashOps(SKU_CACHE_PREFIX);
             session.getRelationSkus().forEach(sku -> {
                 // 4、设置秒杀的随机吗：解决秒杀被恶意刷单的问题，也是防止超卖的问题 seckill:skus:skuId=1&key=随机码
-                String token = UUID.randomUUID().toString().replaceAll("-", "");
-                if (Boolean.TRUE.equals(hashOps.hasKey(sku.getPromotionSessionId() + "_" +sku.getSkuId().toString()))) {
+                String token = UUID.randomUUID().toString().replaceAll(CharacterConstant.HYPHEN, "");
+                if (Boolean.TRUE.equals(hashOps.hasKey(sku.getPromotionSessionId() + CharacterConstant.UNDERLINE +sku.getSkuId().toString()))) {
                     // 缓存商品信息
                     SeckillSkuRedisTo seckillSkuRedisTo = new SeckillSkuRedisTo();
                     // 1、Sku的基本数据
                     R r = productFeignService.getSkuInfo(sku.getSkuId());
-                    if (r.getCode() == 0) {
-                        SkuInfoVO skuInfo = r.getData("skuInfo", new TypeReference<SkuInfoVO>() {
+                    if (Objects.equals(r.getCode(), FeignCodeEnum.SUCCESS.getCode())) {
+                        SkuInfoVO skuInfo = r.getData(ProductConstant.ResultEnum.SKU_INFO.getValue(), new TypeReference<SkuInfoVO>() {
                         });
                         seckillSkuRedisTo.setSkuInfo(skuInfo);
                     }
@@ -110,7 +114,7 @@ public class SeckillServiceImpl implements SeckillService {
 
                     seckillSkuRedisTo.setRandomCode(token);
 
-                    hashOps.put(sku.getPromotionSessionId() + "_" + sku.getSkuId().toString(), JSON.toJSONString(seckillSkuRedisTo));
+                    hashOps.put(sku.getPromotionSessionId() + CharacterConstant.UNDERLINE + sku.getSkuId().toString(), JSON.toJSONString(seckillSkuRedisTo));
 
                     // 如果当前这个场次的商品的库存信息已经上架就不需要上架
                     // 5、使用库存作为分布式信号量，主要作用：限流

@@ -14,6 +14,19 @@ public class ProductConstant {
 
     @Getter
     @AllArgsConstructor
+    public enum ResultEnum {
+
+        /**
+         * sku信息
+         */
+        SKU_INFO(1, "skuInfo");
+
+        private final int code;
+        private final String value;
+    }
+
+    @Getter
+    @AllArgsConstructor
     public enum AttrEnum {
 
         /**

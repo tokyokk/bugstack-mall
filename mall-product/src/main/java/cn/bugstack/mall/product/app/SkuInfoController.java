@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Map;
 
+import cn.bugstack.common.constant.ProductConstant;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -54,7 +55,7 @@ public class SkuInfoController {
     public R info(@PathVariable("skuId") Long skuId) {
         SkuInfoEntity skuInfo = skuInfoService.getById(skuId);
 
-        return R.ok().put("skuInfo", skuInfo);
+        return R.ok().put(ProductConstant.ResultEnum.SKU_INFO.getValue(), skuInfo);
     }
 
     /**
