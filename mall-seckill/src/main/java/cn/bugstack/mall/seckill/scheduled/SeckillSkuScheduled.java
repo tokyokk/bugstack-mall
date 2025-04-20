@@ -2,8 +2,12 @@ package cn.bugstack.mall.seckill.scheduled;
 
 import cn.bugstack.mall.seckill.service.SeckillService;
 import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author micro, 微信：yykk、
@@ -21,8 +25,13 @@ public class SeckillSkuScheduled {
 
     private final SeckillService seckillService;
 
-    public SeckillSkuScheduled(SeckillService seckillService) {
+    private final RedissonClient redissonClient;
+
+    public static final String UPLOAD_SECKILL_LOCK = "seckill:lock";
+
+    public SeckillSkuScheduled(SeckillService seckillService, RedissonClient redissonClient) {
         this.seckillService = seckillService;
+        this.redissonClient = redissonClient;
     }
 
     /**
@@ -31,6 +40,18 @@ public class SeckillSkuScheduled {
     @Scheduled(cron = "0 0 3 * * ?")
     public void uploadSeckillSkuLatest3Days() {
         // 1.重复上架无需处理
-        seckillService.uploadSeckillSkuLatest3Days();
+        log.info("定时上架最近三天需要秒杀的商品");
+        // 分布式锁解决重复上架问题
+        RLock lock = redissonClient.getLock(UPLOAD_SECKILL_LOCK);
+        try {
+            boolean rLock = lock.tryLock(10, TimeUnit.SECONDS);
+            seckillService.uploadSeckillSkuLatest3Days();
+        } catch (InterruptedException e) {
+            log.error("上架秒杀商品异常：{},错误信息：{}", e, e.getMessage());
+        } finally {
+            if (lock.isHeldByCurrentThread() && lock.isLocked()) {
+                lock.unlock();
+            }
+        }
     }
 }

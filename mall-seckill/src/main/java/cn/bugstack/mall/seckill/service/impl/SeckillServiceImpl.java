@@ -74,8 +74,11 @@ public class SeckillServiceImpl implements SeckillService {
             long startTime = session.getStartTime().getTime();
             long endTime = session.getEndTime().getTime();
             String key = SESSIONS_CACHE_PREFIX + startTime + "_" + endTime;
+            if (redisTemplate.hasKey(key)) {
+                return;
+            }
 
-            List<String> skuIds = session.getRelationSkus().stream().map(item -> item.getSkuId().toString()).collect(Collectors.toList());
+            List<String> skuIds = session.getRelationSkus().stream().map(item -> item.getPromotionSessionId() + "_" + item.getSkuId().toString()).collect(Collectors.toList());
             // 缓存活动信息
             redisTemplate.opsForList().leftPushAll(key, skuIds);
         });
@@ -85,33 +88,36 @@ public class SeckillServiceImpl implements SeckillService {
         sessionData.forEach(session -> {
             BoundHashOperations<String, Object, Object> hashOps = redisTemplate.boundHashOps(SKU_CACHE_PREFIX);
             session.getRelationSkus().forEach(sku -> {
-                // 缓存商品信息
-                SeckillSkuRedisTo seckillSkuRedisTo = new SeckillSkuRedisTo();
-                // 1、Sku的基本数据
-                R r = productFeignService.getSkuInfo(sku.getSkuId());
-                if (r.getCode() == 0) {
-                    SkuInfoVO skuInfo = r.getData("skuInfo", new TypeReference<SkuInfoVO>() {
-                    });
-                    seckillSkuRedisTo.setSkuInfo(skuInfo);
-                }
-
-                // 2、sku的秒杀信息
-                BeanUtils.copyProperties(sku, seckillSkuRedisTo);
-
-                // 3、设置当前商品秒杀的时间信息
-                seckillSkuRedisTo.setStartTime(session.getStartTime().getTime());
-                seckillSkuRedisTo.setEndTime(session.getEndTime().getTime());
-
                 // 4、设置秒杀的随机吗：解决秒杀被恶意刷单的问题，也是防止超卖的问题 seckill:skus:skuId=1&key=随机码
                 String token = UUID.randomUUID().toString().replaceAll("-", "");
-                seckillSkuRedisTo.setRandomCode(token);
+                if (Boolean.TRUE.equals(hashOps.hasKey(sku.getPromotionSessionId() + "_" +sku.getSkuId().toString()))) {
+                    // 缓存商品信息
+                    SeckillSkuRedisTo seckillSkuRedisTo = new SeckillSkuRedisTo();
+                    // 1、Sku的基本数据
+                    R r = productFeignService.getSkuInfo(sku.getSkuId());
+                    if (r.getCode() == 0) {
+                        SkuInfoVO skuInfo = r.getData("skuInfo", new TypeReference<SkuInfoVO>() {
+                        });
+                        seckillSkuRedisTo.setSkuInfo(skuInfo);
+                    }
 
-                // 5、使用库存作为分布式信号量，主要作用：限流
-                RSemaphore semaphore = redissonClient.getSemaphore(SKU_STOCK_SEMAPHORE + token);
-                // 设置信号量，设置库存数量，商品可以秒杀的数量
-                semaphore.trySetPermits(sku.getSeckillCount().intValue());
+                    // 2、sku的秒杀信息
+                    BeanUtils.copyProperties(sku, seckillSkuRedisTo);
 
-                hashOps.put(sku.getSkuId().toString(), JSON.toJSONString(seckillSkuRedisTo));
+                    // 3、设置当前商品秒杀的时间信息
+                    seckillSkuRedisTo.setStartTime(session.getStartTime().getTime());
+                    seckillSkuRedisTo.setEndTime(session.getEndTime().getTime());
+
+                    seckillSkuRedisTo.setRandomCode(token);
+
+                    hashOps.put(sku.getPromotionSessionId() + "_" + sku.getSkuId().toString(), JSON.toJSONString(seckillSkuRedisTo));
+
+                    // 如果当前这个场次的商品的库存信息已经上架就不需要上架
+                    // 5、使用库存作为分布式信号量，主要作用：限流
+                    RSemaphore semaphore = redissonClient.getSemaphore(SKU_STOCK_SEMAPHORE + token);
+                    // 设置信号量，设置库存数量，商品可以秒杀的数量
+                    semaphore.trySetPermits(sku.getSeckillCount().intValue());
+                }
             });
         });
     }
