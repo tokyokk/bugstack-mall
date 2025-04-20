@@ -94,7 +94,7 @@ public class SeckillServiceImpl implements SeckillService {
             session.getRelationSkus().forEach(sku -> {
                 // 4、设置秒杀的随机吗：解决秒杀被恶意刷单的问题，也是防止超卖的问题 seckill:skus:skuId=1&key=随机码
                 String token = UUID.randomUUID().toString().replaceAll(CharacterConstant.HYPHEN, "");
-                if (Boolean.TRUE.equals(hashOps.hasKey(sku.getPromotionSessionId() + CharacterConstant.UNDERLINE +sku.getSkuId().toString()))) {
+                if (Boolean.TRUE.equals(hashOps.hasKey(sku.getPromotionSessionId() + CharacterConstant.UNDERLINE + sku.getSkuId().toString()))) {
                     // 缓存商品信息
                     SeckillSkuRedisTo seckillSkuRedisTo = new SeckillSkuRedisTo();
                     // 1、Sku的基本数据
