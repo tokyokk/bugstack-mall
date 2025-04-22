@@ -16,7 +16,6 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import javax.validation.Valid;
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
@@ -41,13 +40,12 @@ public class CartServiceImpl implements CartService {
 
     private final ThreadPoolExecutor threadPoolExecutor;
 
-
-    public CartServiceImpl(final StringRedisTemplate redisTemplate, final ProductFeignService productFeignService, final ThreadPoolExecutor threadPoolExecutor) {
+    public CartServiceImpl(final StringRedisTemplate redisTemplate, final ProductFeignService productFeignService,
+            final ThreadPoolExecutor threadPoolExecutor) {
         this.redisTemplate = redisTemplate;
         this.productFeignService = productFeignService;
         this.threadPoolExecutor = threadPoolExecutor;
     }
-
 
     public static final String CART_PREFIX = "mall:cart:";
 
@@ -192,7 +190,8 @@ public class CartServiceImpl implements CartService {
     /**
      * 获取我们要操作的购物车
      *
-     * @return {@link BoundHashOperations }<{@link String }, {@link Object }, {@link Object }>
+     * @return {@link BoundHashOperations }<{@link String }, {@link Object },
+     *         {@link Object }>
      */
     private BoundHashOperations<String, Object, Object> getCartOps() {
         final UserInfoTO userInfoTo = CartInterceptor.USERINFO_THREAD_LOCAL.get();
@@ -210,7 +209,8 @@ public class CartServiceImpl implements CartService {
         final BoundHashOperations<String, Object, Object> hashOps = redisTemplate.boundHashOps(cartKey);
         final List<Object> values = hashOps.values();
         if (values != null && !values.isEmpty()) {
-            return values.stream().map(obj -> JSON.parseObject(obj.toString(), CartItem.class)).collect(Collectors.toList());
+            return values.stream().map(obj -> JSON.parseObject(obj.toString(), CartItem.class))
+                    .collect(Collectors.toList());
         }
         return Collections.emptyList();
     }
