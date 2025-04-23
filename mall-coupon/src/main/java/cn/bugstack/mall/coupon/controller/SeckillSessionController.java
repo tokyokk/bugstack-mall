@@ -12,8 +12,6 @@ import cn.bugstack.mall.coupon.service.SeckillSessionService;
 import cn.bugstack.common.utils.PageUtils;
 import cn.bugstack.common.utils.R;
 
-
-
 /**
  * 秒杀活动场次
  *
@@ -25,31 +23,33 @@ import cn.bugstack.common.utils.R;
 @RequestMapping("coupon/seckillsession")
 public class SeckillSessionController {
 
-    @Autowired
-    private SeckillSessionService seckillSessionService;
+    private final SeckillSessionService seckillSessionService;
+
+    public SeckillSessionController(SeckillSessionService seckillSessionService) {
+        this.seckillSessionService = seckillSessionService;
+    }
 
     @GetMapping("latest3DaysSession")
     public R getLatest3DaysSession() {
-        List<SeckillSessionEntity> sessionEntityList  = seckillSessionService.getLatest3DaysSession();
-        return  R.ok().setData(sessionEntityList);
+        List<SeckillSessionEntity> sessionEntityList = seckillSessionService.getLatest3DaysSession();
+        return R.ok().setData(sessionEntityList);
     }
 
     /**
      * 列表
      */
     @RequestMapping("/list")
-    public R list(@RequestParam Map<String, Object> params){
+    public R list(@RequestParam Map<String, Object> params) {
         PageUtils page = seckillSessionService.queryPage(params);
         return R.ok().put("page", page);
     }
-
 
     /**
      * 信息
      */
     @RequestMapping("/info/{id}")
-    public R info(@PathVariable("id") Long id){
-		SeckillSessionEntity seckillSession = seckillSessionService.getById(id);
+    public R info(@PathVariable("id") Long id) {
+        SeckillSessionEntity seckillSession = seckillSessionService.getById(id);
         return R.ok().put("seckillSession", seckillSession);
     }
 
@@ -57,8 +57,8 @@ public class SeckillSessionController {
      * 保存
      */
     @RequestMapping("/save")
-    public R save(@RequestBody SeckillSessionEntity seckillSession){
-		seckillSessionService.save(seckillSession);
+    public R save(@RequestBody SeckillSessionEntity seckillSession) {
+        seckillSessionService.save(seckillSession);
         return R.ok();
     }
 
@@ -66,8 +66,8 @@ public class SeckillSessionController {
      * 修改
      */
     @RequestMapping("/update")
-    public R update(@RequestBody SeckillSessionEntity seckillSession){
-		seckillSessionService.updateById(seckillSession);
+    public R update(@RequestBody SeckillSessionEntity seckillSession) {
+        seckillSessionService.updateById(seckillSession);
         return R.ok();
     }
 
@@ -75,8 +75,8 @@ public class SeckillSessionController {
      * 删除
      */
     @RequestMapping("/delete")
-    public R delete(@RequestBody Long[] ids){
-		seckillSessionService.removeByIds(Arrays.asList(ids));
+    public R delete(@RequestBody Long[] ids) {
+        seckillSessionService.removeByIds(Arrays.asList(ids));
         return R.ok();
     }
 
