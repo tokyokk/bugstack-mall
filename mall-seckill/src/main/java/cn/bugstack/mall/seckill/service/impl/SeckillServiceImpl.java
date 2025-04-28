@@ -20,9 +20,7 @@ import org.springframework.data.redis.core.BoundHashOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -71,6 +69,33 @@ public class SeckillServiceImpl implements SeckillService {
             // 2、缓存活动的关联的商品信息
             saveSkuInfos(data);
         }
+    }
+
+    @Override
+    public List<SeckillSkuRedisTo> findCurrentSeckillSkus() {
+        // 1、获取当前时间
+        long nowTime = System.currentTimeMillis();
+        // 2、获取当前时间对应的活动信息
+        Set<String> keys = redisTemplate.keys(SESSIONS_CACHE_PREFIX + "*");
+        if (keys.isEmpty()) {
+            return Collections.emptyList();
+        }
+        // 3、判断当前时间是否在活动时间内，如果在则获取到活动的商品信息
+        for (String key : Collections.unmodifiableSet(keys)) {
+            String replace = key.replace(SESSIONS_CACHE_PREFIX, "");
+            String[] s = replace.split("_");
+            long startTime = Long.parseLong(s[0]);
+            long endTime = Long.parseLong(s[1]);
+            if (nowTime >= startTime && nowTime <= endTime) {
+                // 4、获取到活动的商品信息
+                BoundHashOperations<String, String, String> hashOps = redisTemplate.boundHashOps(SKU_CACHE_PREFIX);
+                List<String> skuIds = redisTemplate.opsForList().range(key, 0, -1);
+                // 这里需要注意因为秒杀已经开始了所以需要返回随机吗，否则是需要将随机吗去除的！
+                return Objects.requireNonNull(hashOps.multiGet(Objects.requireNonNull(skuIds))).stream().map(item -> JSON.parseObject(item, SeckillSkuRedisTo.class)).collect(Collectors.toList());
+            }
+            break;
+        }
+        return Collections.emptyList();
     }
 
     private void saveSessionInfos(List<SeckillSessionsWithSkus> sessionData) {
