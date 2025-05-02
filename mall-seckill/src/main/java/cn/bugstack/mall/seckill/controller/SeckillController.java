@@ -4,6 +4,7 @@ import cn.bugstack.common.utils.R;
 import cn.bugstack.mall.seckill.service.SeckillService;
 import cn.bugstack.mall.seckill.to.SeckillSkuRedisTo;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -28,5 +29,11 @@ public class SeckillController {
     public R findCurrentSeckillSkus() {
         List<SeckillSkuRedisTo> vos = seckillService.findCurrentSeckillSkus();
         return R.ok().setData(vos);
+    }
+
+    @GetMapping("/sku/seckill/{skuId}")
+    public R getSeckillSkuInfo(@PathVariable("skuId") Long skuId) {
+        SeckillSkuRedisTo redisTo = seckillService.getSeckillSkuInfo(skuId);
+        return R.ok().setData(redisTo);
     }
 }

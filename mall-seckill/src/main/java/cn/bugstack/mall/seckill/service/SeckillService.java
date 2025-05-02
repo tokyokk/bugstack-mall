@@ -1,7 +1,6 @@
 package cn.bugstack.mall.seckill.service;
 
 import cn.bugstack.mall.seckill.to.SeckillSkuRedisTo;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
 
@@ -21,6 +20,17 @@ public interface SeckillService {
 
     /**
      * 获取当前秒杀商品信息
+     *
+     * @return 当前秒杀商品信息
      */
     List<SeckillSkuRedisTo> findCurrentSeckillSkus();
+
+
+    /**
+     * 获取指定商品的秒杀信息
+     *
+     * @param skuId 商品ID
+     * @return 秒杀商品信息
+     */
+    SeckillSkuRedisTo getSeckillSkuInfo(Long skuId);
 }

@@ -47,4 +47,9 @@ public class SkuItemVO {
      */
     private boolean hasStock = true;
 
+    /**
+     * 当前商品的秒杀优惠信息
+     */
+    private SeckillInfoVO seckillSkuVo;
+
 }

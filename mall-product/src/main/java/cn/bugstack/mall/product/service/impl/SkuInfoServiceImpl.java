@@ -1,32 +1,33 @@
 package cn.bugstack.mall.product.service.impl;
 
+import cn.bugstack.common.utils.PageUtils;
+import cn.bugstack.common.utils.Query;
+import cn.bugstack.common.utils.R;
+import cn.bugstack.mall.product.dao.SkuInfoDao;
 import cn.bugstack.mall.product.entity.SkuImagesEntity;
+import cn.bugstack.mall.product.entity.SkuInfoEntity;
 import cn.bugstack.mall.product.entity.SpuInfoDescEntity;
+import cn.bugstack.mall.product.feign.SeckillFeignService;
 import cn.bugstack.mall.product.service.*;
+import cn.bugstack.mall.product.vo.SeckillInfoVO;
 import cn.bugstack.mall.product.vo.SkuItemSaleAttrVO;
 import cn.bugstack.mall.product.vo.SkuItemVO;
 import cn.bugstack.mall.product.vo.SpuItemAttrGroupVO;
+import com.alibaba.fastjson.TypeReference;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
-
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import cn.bugstack.common.utils.PageUtils;
-import cn.bugstack.common.utils.Query;
-
-import cn.bugstack.mall.product.dao.SkuInfoDao;
-import cn.bugstack.mall.product.entity.SkuInfoEntity;
 
 
 @Slf4j
@@ -47,6 +48,8 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoDao, SkuInfoEntity> i
 
     @Autowired
     private ThreadPoolExecutor threadPoolExecutor;
+    @Autowired
+    private SeckillFeignService seckillFeignService;
 
     @Override
     public PageUtils queryPage(Map<String, Object> params) {
@@ -149,8 +152,18 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoDao, SkuInfoEntity> i
             itemVO.setImages(images);
         }, threadPoolExecutor);
 
+        // 查询当前sku是否参与秒杀优惠
+        CompletableFuture<Void> seckillFuture = CompletableFuture.runAsync(() -> {
+            R r = seckillFeignService.getSeckillSkuInfo(skuId);
+            if (r.getCode() == 0) {
+                SeckillInfoVO seckillInfoVO = r.getData(new TypeReference<SeckillInfoVO>() {
+                });
+                itemVO.setSeckillSkuVo(seckillInfoVO);
+            }
+        }, threadPoolExecutor);
+
         try {
-            CompletableFuture.allOf(saleAttrFuture, descFuture, baseAttrFuture, imageFuture).get();
+            CompletableFuture.allOf(saleAttrFuture, descFuture, baseAttrFuture, imageFuture, seckillFuture).get();
         } catch (Exception e) {
             e.printStackTrace();
             log.error("获取sku详情异常：{}", e.getMessage());

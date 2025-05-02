@@ -21,6 +21,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -96,6 +97,29 @@ public class SeckillServiceImpl implements SeckillService {
             break;
         }
         return Collections.emptyList();
+    }
+
+    @Override
+    public SeckillSkuRedisTo getSeckillSkuInfo(Long skuId) {
+        // 1、找到所有需要参与秒杀的商品的key
+        BoundHashOperations<String, String, String> hashOps = redisTemplate.boundHashOps(SKU_CACHE_PREFIX);
+        Set<String> keys = hashOps.keys();
+        if (keys != null && keys.size() > 0) {
+            String regx = "\\d_" + skuId;
+            for (String key : keys) {
+                if (Pattern.matches(regx, key)) {
+                    SeckillSkuRedisTo seckillSkuRedisTo = JSON.parseObject(hashOps.get(key), SeckillSkuRedisTo.class);
+                    // 随机码
+                    long currentTime = new Date().getTime();
+                    if (currentTime >= seckillSkuRedisTo.getStartTime() && currentTime <= seckillSkuRedisTo.getEndTime()) {
+                    } else {
+                        seckillSkuRedisTo.setRandomCode(null);
+                    }
+                    return seckillSkuRedisTo;
+                }
+            }
+        }
+        return null;
     }
 
     private void saveSessionInfos(List<SeckillSessionsWithSkus> sessionData) {
