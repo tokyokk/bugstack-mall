@@ -1,5 +1,6 @@
 package cn.bugstack.mall.order.service;
 
+import cn.bugstack.common.to.mq.SeckillOrderTo;
 import cn.bugstack.mall.order.vo.*;
 import com.baomidou.mybatisplus.extension.service.IService;
 import cn.bugstack.common.utils.PageUtils;
@@ -37,5 +38,11 @@ public interface OrderService extends IService<OrderEntity> {
     PageUtils queryPageWithItem(Map<String, Object> params);
 
     String handlePayResult(PayAsyncVo asyncVo);
+
+    /**
+     * 处理秒杀订单
+     * @param seckillOrderTo 秒杀订单信息
+     */
+    void createSeckillOrder(SeckillOrderTo seckillOrderTo);
 }
 

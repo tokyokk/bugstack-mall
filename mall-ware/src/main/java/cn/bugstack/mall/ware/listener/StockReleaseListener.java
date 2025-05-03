@@ -1,13 +1,8 @@
 package cn.bugstack.mall.ware.listener;
 
 import cn.bugstack.common.to.OrderTO;
-import cn.bugstack.common.to.mq.StockDetailTO;
-import cn.bugstack.common.to.mq.StockLockedTO;
-import cn.bugstack.common.utils.R;
-import cn.bugstack.mall.ware.entity.WareOrderTaskEntity;
+import cn.bugstack.common.to.mq.StockLockedTo;
 import cn.bugstack.mall.ware.service.WareSkuService;
-import cn.bugstack.mall.ware.vo.OrderVO;
-import com.alibaba.fastjson.TypeReference;
 import com.rabbitmq.client.Channel;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -16,9 +11,6 @@ import org.springframework.amqp.rabbit.annotation.RabbitHandler;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.io.IOException;
-import java.util.Objects;
 
 /**
  * @author micro, 微信：yykk、
@@ -47,7 +39,7 @@ public class StockReleaseListener {
      */
     @RabbitHandler
     @SneakyThrows
-    public void handlerStockLockedRelease(StockLockedTO lockedTO, Message message, Channel channel){
+    public void handlerStockLockedRelease(StockLockedTo lockedTO, Message message, Channel channel){
 
         try {
             // 单前消息是否被第二次以后（重新）派发过来了。

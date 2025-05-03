@@ -33,4 +33,14 @@ public interface SeckillService {
      * @return 秒杀商品信息
      */
     SeckillSkuRedisTo getSeckillSkuInfo(Long skuId);
+
+    /**
+     * 秒杀商品
+     *
+     * @param killId 秒杀场次ID
+     * @param key    商品key
+     * @param num    秒杀数量
+     * @return 订单号
+     */
+    String seckill(String killId, String key, Integer num);
 }

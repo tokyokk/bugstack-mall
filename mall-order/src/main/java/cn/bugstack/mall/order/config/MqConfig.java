@@ -66,7 +66,6 @@ public class MqConfig {
 
     /**
      * 订单释放和库存释放直接绑定
-     * @return
      */
     @Bean
     public Binding orderReleaseOtherBinding() {
@@ -74,4 +73,17 @@ public class MqConfig {
                 Binding.DestinationType.QUEUE,
                 "order-event-exchange", "order.release.other.#", null);
     }
+
+    @Bean
+    public Queue orderSeckillOrderQueue() {
+        return new Queue("order.seckill.order.queue", true, false, false, null);
+    }
+
+    @Bean
+    public Binding orderSeckillOrderBinding() {
+        return new Binding("order.seckill.order.queue",
+                Binding.DestinationType.QUEUE,
+                "order-event-exchange", "order.seckill.order", null);
+    }
+
 }

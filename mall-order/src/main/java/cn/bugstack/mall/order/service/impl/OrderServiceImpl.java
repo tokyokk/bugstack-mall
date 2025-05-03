@@ -2,6 +2,7 @@ package cn.bugstack.mall.order.service.impl;
 
 import cn.bugstack.common.exception.NotStockException;
 import cn.bugstack.common.to.OrderTO;
+import cn.bugstack.common.to.mq.SeckillOrderTo;
 import cn.bugstack.common.utils.PageUtils;
 import cn.bugstack.common.utils.Query;
 import cn.bugstack.common.utils.R;
@@ -275,6 +276,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
 
     /**
      * 处理支付宝的支付接口
+     *
      * @param vo
      * @return
      */
@@ -293,9 +295,29 @@ public class OrderServiceImpl extends ServiceImpl<OrderDao, OrderEntity> impleme
         paymentInfoService.save(paymentInfoEntity);
         // 2.更新订单状态
         if (vo.getTrade_status().equals("TRADE_SUCCESS") || vo.getTrade_status().equals("TRADE_FINISHED")) {
-            baseMapper.updateOrderStatus(vo.getOut_trade_no(),OrderStatusEnum.PAYED.getCode());
+            baseMapper.updateOrderStatus(vo.getOut_trade_no(), OrderStatusEnum.PAYED.getCode());
         }
         return "success";
+    }
+
+    @Override
+    public void createSeckillOrder(SeckillOrderTo seckillOrderTo) {
+        // todo：保存订单信息
+        OrderEntity orderEntity = new OrderEntity();
+        orderEntity.setMemberId(seckillOrderTo.getMemberId());
+        orderEntity.setOrderSn(seckillOrderTo.getOrderSn());
+        orderEntity.setStatus(OrderStatusEnum.CREATE_NEW.getCode());
+        orderEntity.setPayAmount(seckillOrderTo.getSeckillPrice().multiply(new BigDecimal(seckillOrderTo.getNum().toString())));
+        this.save(orderEntity);
+        // todo：保存订单项信息
+        OrderItemEntity orderItemEntity = new OrderItemEntity();
+        orderItemEntity.setOrderSn(seckillOrderTo.getOrderSn());
+        Long skuId = seckillOrderTo.getSkuId();
+        orderItemEntity.setSkuId(skuId);
+        // todo：R r = productFeignService.getSpuInfoBySkuId(skuId); 查询并且设置相关信息
+        orderItemEntity.setRealAmount(seckillOrderTo.getSeckillPrice().multiply(new BigDecimal(seckillOrderTo.getNum().toString())));
+        orderItemEntity.setSkuQuantity(seckillOrderTo.getNum());
+        orderItemService.save(orderItemEntity);
     }
 
     private void saveOrder(final OrderCreateTO order) {

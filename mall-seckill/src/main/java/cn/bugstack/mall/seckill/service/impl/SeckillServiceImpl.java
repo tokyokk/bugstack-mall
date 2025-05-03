@@ -3,24 +3,31 @@ package cn.bugstack.mall.seckill.service.impl;
 import cn.bugstack.common.FeignCodeEnum;
 import cn.bugstack.common.constant.CharacterConstant;
 import cn.bugstack.common.constant.ProductConstant;
+import cn.bugstack.common.to.mq.SeckillOrderTo;
 import cn.bugstack.common.utils.R;
+import cn.bugstack.common.vo.MemberResponseVO;
 import cn.bugstack.mall.seckill.feign.CouponFeignService;
 import cn.bugstack.mall.seckill.feign.ProductFeignService;
+import cn.bugstack.mall.seckill.interceptor.LoginUserInterceptor;
 import cn.bugstack.mall.seckill.service.SeckillService;
 import cn.bugstack.mall.seckill.to.SeckillSkuRedisTo;
 import cn.bugstack.mall.seckill.vo.SeckillSessionsWithSkus;
 import cn.bugstack.mall.seckill.vo.SkuInfoVO;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RSemaphore;
 import org.redisson.api.RedissonClient;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.BoundHashOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -43,17 +50,20 @@ public class SeckillServiceImpl implements SeckillService {
 
     private final RedissonClient redissonClient;
 
+    private final RabbitTemplate rabbitTemplate;
+
     public static final String SESSIONS_CACHE_PREFIX = "seckill:sessions:";
 
     public static final String SKU_CACHE_PREFIX = "seckill:skus";
 
     public static final String SKU_STOCK_SEMAPHORE = "seckill:stock"; // +商品随机吗
 
-    public SeckillServiceImpl(CouponFeignService couponFeignService, StringRedisTemplate redisTemplate, ProductFeignService productFeignService, RedissonClient redissonClient) {
+    public SeckillServiceImpl(CouponFeignService couponFeignService, StringRedisTemplate redisTemplate, ProductFeignService productFeignService, RedissonClient redissonClient, RabbitTemplate rabbitTemplate) {
         this.couponFeignService = couponFeignService;
         this.redisTemplate = redisTemplate;
         this.productFeignService = productFeignService;
         this.redissonClient = redissonClient;
+        this.rabbitTemplate = rabbitTemplate;
     }
 
     @Override
@@ -117,6 +127,80 @@ public class SeckillServiceImpl implements SeckillService {
                     }
                     return seckillSkuRedisTo;
                 }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * todo：上架秒杀商品的时候，每一个数据都给定一个过期时间
+     * todo：秒杀后续的流程，收货地址等信息
+     * @param killId 秒杀场次ID
+     * @param key    商品key
+     * @param num    秒杀数量
+     * @return
+     */
+    @Override
+    public String seckill(String killId, String key, Integer num) {
+        MemberResponseVO responseVO = LoginUserInterceptor.LOGIN_USER.get();
+        // 1、登录校验已处理
+        // 2、获取当前秒杀商品的详细信息
+        BoundHashOperations<String, String, String> hashOps = redisTemplate.boundHashOps(SKU_CACHE_PREFIX);
+
+        String json = hashOps.get(killId);
+        if (StringUtils.isEmpty(json)) {
+            return null;
+        } else {
+            SeckillSkuRedisTo seckillSkuRedisTo = JSON.parseObject(json, SeckillSkuRedisTo.class);
+            // 校验合法性
+            Long startTime = seckillSkuRedisTo.getStartTime();
+            Long endTime = seckillSkuRedisTo.getEndTime();
+            long nowTime = System.currentTimeMillis();
+
+            long ttl = endTime - nowTime;
+            // 1、校验时间的合法性
+            if (nowTime >= startTime && nowTime <= endTime) {
+                // 校验随机吗和商品id
+                String randomCode = seckillSkuRedisTo.getRandomCode();
+                String skuId = seckillSkuRedisTo.getPromotionId() + "_" + seckillSkuRedisTo.getSkuId();
+                if (randomCode.equals(key) && skuId.equals(killId)) {
+                    // 3、验证购买数量合法性
+                    if (num <= seckillSkuRedisTo.getSeckillLimit()) {
+                        // 4、验证这个人是否已经购买过，幂等性，只要秒杀成功，就去占位。userId_promotionId_skuId
+                        String redisKey = responseVO.getId() + "_" + seckillSkuRedisTo.getPromotionId() + "_" + seckillSkuRedisTo.getSkuId();
+                        // setnx 自动过期
+                        Boolean absent = redisTemplate.opsForValue().setIfAbsent(redisKey, num.toString(), ttl, TimeUnit.MILLISECONDS);
+                        if (Boolean.TRUE.equals(absent)) {
+                            // 占位成功，说明这个人从来没有买过
+                            RSemaphore semaphore = redissonClient.getSemaphore(SKU_STOCK_SEMAPHORE + randomCode);
+                            boolean tryAcquire = semaphore.tryAcquire(num);
+                            if (tryAcquire) {
+                                // 秒杀成功
+                                // 快速下单发送一个MQ消息
+                                String timeId = IdWorker.getTimeId();
+                                SeckillOrderTo seckillOrderTo = new SeckillOrderTo();
+                                seckillOrderTo.setOrderSn(timeId);
+                                seckillOrderTo.setPromotionSessionId(seckillSkuRedisTo.getPromotionSessionId());
+                                seckillOrderTo.setSkuId(seckillSkuRedisTo.getSkuId());
+                                seckillOrderTo.setSeckillPrice(seckillSkuRedisTo.getSeckillPrice());
+                                seckillOrderTo.setNum(num);
+                                seckillOrderTo.setMemberId(responseVO.getId());
+
+                                rabbitTemplate.convertAndSend("order-event-exchange", "order.seckill.order", seckillOrderTo);
+                                return timeId;
+                            }
+                            return null;
+
+                        } else {
+                            // 说明已经买过了
+                            return null;
+                        }
+                    }
+                } else {
+                    return null;
+                }
+            } else {
+                return null;
             }
         }
         return null;

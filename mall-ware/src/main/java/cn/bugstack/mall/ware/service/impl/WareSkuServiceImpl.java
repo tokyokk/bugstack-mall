@@ -1,8 +1,8 @@
 package cn.bugstack.mall.ware.service.impl;
 
 import cn.bugstack.common.to.OrderTO;
-import cn.bugstack.common.to.mq.StockDetailTO;
-import cn.bugstack.common.to.mq.StockLockedTO;
+import cn.bugstack.common.to.mq.StockDetailTo;
+import cn.bugstack.common.to.mq.StockLockedTo;
 import cn.bugstack.common.utils.R;
 import cn.bugstack.mall.ware.entity.WareOrderTaskDetailEntity;
 import cn.bugstack.mall.ware.entity.WareOrderTaskEntity;
@@ -13,20 +13,13 @@ import cn.bugstack.mall.ware.service.WareOrderTaskDetailService;
 import cn.bugstack.mall.ware.service.WareOrderTaskService;
 import cn.bugstack.mall.ware.vo.*;
 import com.alibaba.fastjson.TypeReference;
-import com.rabbitmq.client.Channel;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.amqp.core.Message;
-import org.springframework.amqp.rabbit.annotation.RabbitHandler;
-import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -192,9 +185,9 @@ public class WareSkuServiceImpl extends ServiceImpl<WareSkuDao, WareSkuEntity> i
                             entity
                     );
                     // 告诉MQ库存锁定成功
-                    StockLockedTO stockLockedTO = new StockLockedTO();
+                    StockLockedTo stockLockedTO = new StockLockedTo();
                     stockLockedTO.setId(wareOrderTask.getId());
-                    StockDetailTO stockDetailTO = new StockDetailTO();
+                    StockDetailTo stockDetailTO = new StockDetailTo();
                     BeanUtils.copyProperties(entity,stockDetailTO);
                     // 只发id不行，防止前面的数据回滚找不到数据
                     stockLockedTO.setDetail(stockDetailTO);
@@ -212,9 +205,9 @@ public class WareSkuServiceImpl extends ServiceImpl<WareSkuDao, WareSkuEntity> i
 }
 
     @Override
-    public void unLockStock(StockLockedTO lockedTO) {
+    public void unLockStock(StockLockedTo lockedTO) {
         log.info("收到库存解锁的消息");
-        StockDetailTO detail = lockedTO.getDetail();
+        StockDetailTo detail = lockedTO.getDetail();
         Long detailId = detail.getId();
         // 解锁
         // 1、查询数据库这个订单的锁定库存信息
