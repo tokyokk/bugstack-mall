@@ -26,6 +26,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
@@ -120,8 +121,8 @@ public class SeckillServiceImpl implements SeckillService {
                 if (Pattern.matches(regx, key)) {
                     SeckillSkuRedisTo seckillSkuRedisTo = JSON.parseObject(hashOps.get(key), SeckillSkuRedisTo.class);
                     // 随机码
-                    long currentTime = new Date().getTime();
-                    if (currentTime >= seckillSkuRedisTo.getStartTime() && currentTime <= seckillSkuRedisTo.getEndTime()) {
+                    long currentTime = ZonedDateTime.now().toInstant().toEpochMilli();
+                    if (currentTime >= Objects.requireNonNull(seckillSkuRedisTo).getStartTime() && currentTime <= seckillSkuRedisTo.getEndTime()) {
                     } else {
                         seckillSkuRedisTo.setRandomCode(null);
                     }
