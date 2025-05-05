@@ -12,7 +12,7 @@ import cn.bugstack.mall.order.dao.OrderDao;
 import cn.bugstack.mall.order.entity.OrderEntity;
 import cn.bugstack.mall.order.entity.OrderItemEntity;
 import cn.bugstack.mall.order.entity.PaymentInfoEntity;
-import cn.bugstack.mall.order.enume.OrderStatusEnum;
+import cn.bugstack.mall.order.enums.OrderStatusEnum;
 import cn.bugstack.mall.order.feign.CartFeignService;
 import cn.bugstack.mall.order.feign.MemberFeignService;
 import cn.bugstack.mall.order.feign.ProductFeignService;

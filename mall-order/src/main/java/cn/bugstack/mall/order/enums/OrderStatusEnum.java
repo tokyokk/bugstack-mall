@@ -1,4 +1,4 @@
-package cn.bugstack.mall.order.enume;
+package cn.bugstack.mall.order.enums;
 
 public enum OrderStatusEnum {
 
