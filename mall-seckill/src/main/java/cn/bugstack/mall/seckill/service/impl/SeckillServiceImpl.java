@@ -13,6 +13,10 @@ import cn.bugstack.mall.seckill.service.SeckillService;
 import cn.bugstack.mall.seckill.to.SeckillSkuRedisTo;
 import cn.bugstack.mall.seckill.vo.SeckillSessionsWithSkus;
 import cn.bugstack.mall.seckill.vo.SkuInfoVO;
+import com.alibaba.csp.sentinel.Entry;
+import com.alibaba.csp.sentinel.SphU;
+import com.alibaba.csp.sentinel.annotation.SentinelResource;
+import com.alibaba.csp.sentinel.slots.block.BlockException;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -83,30 +87,45 @@ public class SeckillServiceImpl implements SeckillService {
         }
     }
 
+    public List<SeckillSkuRedisTo> blockHandler(BlockException e) {
+        log.error("系统限流，findCurrentSeckillSkus方法返回空：{}", e.getMessage(), e);
+        return Collections.emptyList();
+    }
+
+    /**
+     * blockHandler函数会在原方法被限流/降级/系统保护的时候调用，而 fallback 函数会针对所有类型的异常。
+     * 使用fallback首先方法是静态方法，其次需要制定fallbackClass以及fallback
+     */
+    @SentinelResource(value = "findCurrentSeckillSkusResource",blockHandler = "blockHandler")
     @Override
     public List<SeckillSkuRedisTo> findCurrentSeckillSkus() {
         // 1、获取当前时间
         long nowTime = System.currentTimeMillis();
-        // 2、获取当前时间对应的活动信息
-        Set<String> keys = redisTemplate.keys(SESSIONS_CACHE_PREFIX + "*");
-        if (keys.isEmpty()) {
-            return Collections.emptyList();
-        }
-        // 3、判断当前时间是否在活动时间内，如果在则获取到活动的商品信息
-        for (String key : Collections.unmodifiableSet(keys)) {
-            String replace = key.replace(SESSIONS_CACHE_PREFIX, "");
-            String[] s = replace.split("_");
-            long startTime = Long.parseLong(s[0]);
-            long endTime = Long.parseLong(s[1]);
-            if (nowTime >= startTime && nowTime <= endTime) {
-                // 4、获取到活动的商品信息
-                BoundHashOperations<String, String, String> hashOps = redisTemplate.boundHashOps(SKU_CACHE_PREFIX);
-                List<String> skuIds = redisTemplate.opsForList().range(key, 0, -1);
-                // 这里需要注意因为秒杀已经开始了所以需要返回随机吗，否则是需要将随机吗去除的！
-                return Objects.requireNonNull(hashOps.multiGet(Objects.requireNonNull(skuIds))).stream().map(item -> JSON.parseObject(item, SeckillSkuRedisTo.class)).collect(Collectors.toList());
+        try (Entry entry = SphU.entry("seckillSkus")) {
+            // 2、获取当前时间对应的活动信息
+            Set<String> keys = redisTemplate.keys(SESSIONS_CACHE_PREFIX + "*");
+            if (keys.isEmpty()) {
+                return Collections.emptyList();
             }
-            break;
+            // 3、判断当前时间是否在活动时间内，如果在则获取到活动的商品信息
+            for (String key : Collections.unmodifiableSet(keys)) {
+                String replace = key.replace(SESSIONS_CACHE_PREFIX, "");
+                String[] s = replace.split("_");
+                long startTime = Long.parseLong(s[0]);
+                long endTime = Long.parseLong(s[1]);
+                if (nowTime >= startTime && nowTime <= endTime) {
+                    // 4、获取到活动的商品信息
+                    BoundHashOperations<String, String, String> hashOps = redisTemplate.boundHashOps(SKU_CACHE_PREFIX);
+                    List<String> skuIds = redisTemplate.opsForList().range(key, 0, -1);
+                    // 这里需要注意因为秒杀已经开始了所以需要返回随机吗，否则是需要将随机吗去除的！
+                    return Objects.requireNonNull(hashOps.multiGet(Objects.requireNonNull(skuIds))).stream().map(item -> JSON.parseObject(item, SeckillSkuRedisTo.class)).collect(Collectors.toList());
+                }
+                break;
+            }
+        } catch (BlockException e) {
+            log.error("系统限流，findCurrentSeckillSkus方法返回空：{}", e.getMessage(), e);
         }
+
         return Collections.emptyList();
     }
 
@@ -136,6 +155,7 @@ public class SeckillServiceImpl implements SeckillService {
     /**
      * todo：上架秒杀商品的时候，每一个数据都给定一个过期时间
      * todo：秒杀后续的流程，收货地址等信息
+     *
      * @param killId 秒杀场次ID
      * @param key    商品key
      * @param num    秒杀数量
